@@ -1,0 +1,15 @@
+{
+  "name": "skisaison",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kärntner Skipass: Gebiete, Öffi-Anreise, Wetter, Tagebuch und Rechnung als PWA mit kleinem Node-Server.",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "hafas-client": "6.3.6"
+  }
+}

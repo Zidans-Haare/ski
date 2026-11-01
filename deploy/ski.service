@@ -1,0 +1,32 @@
+# systemd-Dienst für Skisaison. Läuft als eigener Benutzer "ski", nur auf 127.0.0.1:3100.
+[Unit]
+Description=Skisaison (ski.olomek.com)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ski
+Group=ski
+WorkingDirectory=/home/ski/app
+EnvironmentFile=/home/ski/app/.env
+Environment=NODE_ENV=production
+Environment=NODE_NO_WARNINGS=1
+ExecStart=/home/ski/.local/node/bin/node server/index.js
+Restart=on-failure
+RestartSec=5
+# Abschotten: darf nur in sein eigenes Datenverzeichnis schreiben
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ski/app/data
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

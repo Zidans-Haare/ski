@@ -1,0 +1,25 @@
+{
+  "name": "Skisaison Kärnten",
+  "short_name": "Skisaison",
+  "description": "Kärntner Skipass: Gebiete, Öffi-Anreise, Wetter, Tagebuch und Rechnung.",
+  "lang": "de-AT",
+  "id": "./",
+  "start_url": "./#/saison",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#E9F0F3",
+  "theme_color": "#0F2B3C",
+  "categories": ["sports", "travel", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Skitag eintragen", "short_name": "Eintragen", "url": "./#/neu", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Karte", "url": "./#/karte", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Rechnung", "url": "./#/rechnung", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

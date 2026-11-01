@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Skisaison</title>
+<meta name="description" content="Kärntner Skipass: Gebiete, Öffi-Anreise, Wetter, Tagebuch und Rechnung.">
+<meta name="theme-color" content="#0F2B3C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Skisaison">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="offline" id="offline" hidden>Offline. Deine Daten sind da, Wetter und Webcams brauchen Netz.</div>
+
+<header class="appbar" id="appbar">
+  <button class="iconbtn back" id="back" hidden aria-label="Zurück"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <span class="apptitle" id="apptitle">Skisaison</span>
+  <button class="pillbtn" id="install" hidden>App installieren</button>
+  <button class="iconbtn" id="infoBtn" aria-label="Datenquellen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+</header>
+
+<main id="main">
+
+<!-- SAISON -->
+<section class="view" id="v-saison" data-title="Skisaison">
+  <div class="pass" id="pass">
+    <div class="pass-top">
+      <span>Kärntner Skipass</span><span>2026/27</span>
+    </div>
+    <div class="pass-count"><b id="passN">0</b><span>von 31 Gebieten gefahren</span></div>
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
+    <div class="pass-foot">
+      <div><span class="k">Skitage</span><b id="sDays">0</b></div>
+      <div><span class="k">Höhenmeter</span><b id="sHm">0</b></div>
+      <div><span class="k">Pass bezahlt</span><b id="sPaid">0 %</b></div>
+    </div>
+  </div>
+
+  <div class="block" id="nextTrip"></div>
+
+  <div class="block">
+    <h2>Diese Gebiete fehlen noch</h2>
+    <p class="lead">Die nächsten offenen Gebiete, die du gut an einem Tag schaffst.</p>
+    <ul class="rows" id="openList"></ul>
+    <a class="textlink" href="#/karte">Alle 31 auf der Karte</a>
+  </div>
+
+</section>
+
+<!-- KARTE -->
+<section class="view" id="v-karte" data-title="Karte">
+  <div class="mapwrap">
+    <svg id="map" role="img" aria-label="Karte von Kärnten und Osttirol mit allen Skigebieten und Bahnlinien ab Villach"></svg>
+    <div class="mapctl">
+      <button class="iconbtn" id="zin" aria-label="Hineinzoomen"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zout" aria-label="Herauszoomen"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button class="iconbtn" id="zall" aria-label="Alles zeigen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+    <div class="peek" id="peek" hidden></div>
+  </div>
+  <div class="filters" id="filters" role="group" aria-label="Filter"></div>
+  <ul class="rows arealist" id="areaList"></ul>
+</section>
+
+<!-- GEBIET -->
+<section class="view" id="v-gebiet" data-title=""></section>
+
+<!-- PLANEN -->
+<section class="view" id="v-planen" data-title="Trip planen">
+  <h1 class="pageh">Zwei Gebiete, eine Nacht</h1>
+  <p class="lead">Gebiete, die nah beieinander und weit von Villach weg liegen. Eine Übernachtung spart dir die zweite lange Anreise.</p>
+  <div class="combos" id="combos"></div>
+  <div class="plan" id="plan"></div>
+</section>
+
+<!-- TAGEBUCH -->
+<section class="view" id="v-tagebuch" data-title="Tagebuch">
+  <h1 class="pageh">Meine Skitage</h1>
+  <div id="diary"></div>
+</section>
+
+<!-- RECHNUNG -->
+<section class="view" id="v-rechnung" data-title="Rechnung">
+  <h1 class="pageh">Hat sich der Pass gerechnet?</h1>
+  <div class="calc-hero" id="calcHero"></div>
+  <div class="block">
+    <h2>Skitage</h2>
+    <p class="lead">Jeder Tag zählt mit dem Preis der Tageskarte. Markiert ist der Tag, an dem der Pass drin ist.</p>
+    <ol class="ledger" id="ledger"></ol>
+  </div>
+  <div class="block">
+    <h2>Tagespreise</h2>
+    <p class="lead">Tageskarte Erwachsene, Hauptsaison, recherchiert am 1.11.2026. Tippe auf einen Preis, um ihn zu ändern.</p>
+    <div class="legend3"><span class="src ok">2026/27</span> aktueller Preis <span class="src alt">älter</span> Vorjahr oder älter <span class="src est">geschätzt</span> keine Quelle</div>
+    <ul class="prices" id="prices"></ul>
+  </div>
+</section>
+
+</main>
+
+<button class="fab" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Skitag eintragen</button>
+
+<nav class="tabbar" id="tabbar" aria-label="Bereiche">
+  <a href="#/saison" data-tab="saison"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h6M7 14h3"/></svg><span>Saison</span></a>
+  <a href="#/karte" data-tab="karte"><svg viewBox="0 0 24 24"><path d="M3 19l6-12 4 7 2-3 6 8z"/></svg><span>Karte</span></a>
+  <a href="#/planen" data-tab="planen"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 11h12M9 20l1.5-4M15 20l-1.5-4"/></svg><span>Planen</span></a>
+  <a href="#/tagebuch" data-tab="tagebuch"><svg viewBox="0 0 24 24"><path d="M6 3h10a2 2 0 012 2v16l-6-3-6 3V5a2 2 0 010-2z"/></svg><span>Tagebuch</span></a>
+  <a href="#/rechnung" data-tab="rechnung"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15 9a3.5 3.5 0 100 6M8 11h5.5M8 13.5h5.5"/></svg><span>Rechnung</span></a>
+</nav>
+
+<!-- Skitag eintragen -->
+<dialog class="sheet" id="entry">
+  <form method="dialog" id="entryForm">
+    <div class="sheet-head"><h2>Skitag eintragen</h2><button class="iconbtn" value="cancel" formnovalidate aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="fgrid">
+      <label class="f">Datum<input type="date" id="fDate" required></label>
+      <label class="f">Skigebiet<select id="fArea"></select></label>
+    </div>
+    <div class="f">Fotos
+      <div class="upl" id="fPhotos"><label class="add" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><input type="file" id="fFile" accept="image/*" multiple></label></div>
+    </div>
+    <div class="fgrid four">
+      <label class="f">Höhenmeter<input type="number" id="fHm" inputmode="numeric" min="0" placeholder="0"></label>
+      <label class="f">Kilometer<input type="number" id="fKm" inputmode="decimal" min="0" placeholder="0"></label>
+      <label class="f">Abfahrten<input type="number" id="fRuns" inputmode="numeric" min="0" placeholder="0"></label>
+      <label class="f">km/h max<input type="number" id="fV" inputmode="numeric" min="0" placeholder="0"></label>
+    </div>
+    <div><button class="btn" type="button" id="stravaBtn">Aus Strava übernehmen</button><div id="stravaList" class="stravalist"></div></div>
+    <div class="fgrid">
+      <label class="f">Schnee<select id="fSnow"><option>Pulver</option><option>Griffig</option><option>Kunstschnee, hart</option><option>Sulz</option><option>Eisig</option></select></label>
+      <div class="f">Wie war's?<div class="rate" id="fRate"></div></div>
+    </div>
+    <label class="f">Notiz<textarea id="fNote" rows="3" placeholder="Beste Abfahrt, Hütte, Schneelage"></textarea></label>
+    <label class="f">Anreise<input id="fTravel" placeholder="z. B. RJ 7:12 nach Spittal, Bus 180"></label>
+    <div class="sheet-foot"><button class="btn primary" value="ok">Speichern</button></div>
+  </form>
+</dialog>
+
+<!-- Foto groß -->
+<dialog class="lightbox" id="lightbox">
+  <img id="lbImg" alt="">
+  <div class="lb-bar"><span id="lbCap"></span><button class="iconbtn light" id="lbClose" aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+</dialog>
+
+<!-- Datenquellen -->
+<dialog class="sheet" id="info">
+  <form method="dialog">
+    <div class="sheet-head"><h2>Konto und Daten</h2><button class="iconbtn" aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="account"></div>
+    <h3 style="margin-top:8px">Datenquellen</h3>
+    <ul class="conn">
+      <li><span class="dotc ok"></span><div><b>kaerntner-skipass.com</b><p>Pisten, Lifte, Pistenpläne, Webcams und Kontakt. Stand 1.11.2026.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>meteoblue</b><p>Meteogramm für jedes Gebiet, live eingebunden.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>ÖBB Scotty</b><p>Verbindungssuche ab Villach, vorausgefüllt mit dem Ausstiegsbahnhof.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>ÖBB live</b><p>Nächste Verbindungen ab Villach in „Anreise“. Inoffizielle Schnittstelle der ÖBB-App, kann ausfallen.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>Strava</b><p>Skiaktivitäten von Strava und deiner Garmin-Uhr beim Eintragen übernehmen.</p></div></li>
+      <li><span class="dotc warn"></span><div><b>Skiline</b><p>Liftfahrten zur Skipassnummer. Keine offizielle API, nur ein Versuch über deinen eigenen Login.</p></div></li>
+    </ul>
+  </form>
+</dialog>
+
+<!-- Anmelden -->
+<dialog class="sheet" id="login">
+  <form id="loginForm">
+    <div class="sheet-head"><h2>Anmelden</h2><button class="iconbtn" type="button" data-close aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p>Mit dem Passwort werden Tagebuch, Fotos und Einstellungen auf deinem Server gespeichert und zwischen deinen Geräten abgeglichen.</p>
+    <label class="f">Passwort<input type="password" id="loginPw" autocomplete="current-password" required></label>
+    <p class="hint" id="loginErr" style="color:var(--danger)"></p>
+    <div class="sheet-foot"><button class="btn primary">Anmelden</button></div>
+  </form>
+</dialog>
+
+<!-- iOS-Hinweis -->
+<dialog class="sheet" id="iosHint">
+  <form method="dialog">
+    <div class="sheet-head"><h2>Auf den Home-Bildschirm</h2><button class="iconbtn" aria-label="Schließen"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p>Tippe in Safari unten auf <b>Teilen</b> und dann auf <b>Zum Home-Bildschirm</b>. Danach startet die App ohne Browserleiste und funktioniert auch offline.</p>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

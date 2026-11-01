@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ski Saison 26/27</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --font-display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --font-body:'Barlow',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --bg:#eef2f5;--surface:#fff;--surface2:#f5f8fa;--border:#cbd6dd;--fg:#12212b;--muted:#546873;
+  --route:#0a5fd0;--tint:#e8f0fa;--strava:#e8590c;
+  --t1:#0f8a5f;--t2:#c68500;--t3:#d4551f;--t4:#76858e;
+  --done:#0a5fd0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e171d;--surface:#16232c;--surface2:#1b2a34;--border:#2a3e49;--fg:#e7eff3;--muted:#94a7b1;
+    --route:#6db4ff;--tint:#1b3042;--strava:#ff7a33;
+    --t1:#3fd197;--t2:#f1b53c;--t3:#ff8c5d;--t4:#8e9ca5;--done:#6db4ff;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e171d;--surface:#16232c;--surface2:#1b2a34;--border:#2a3e49;--fg:#e7eff3;--muted:#94a7b1;
+  --route:#6db4ff;--tint:#1b3042;--strava:#ff7a33;
+  --t1:#3fd197;--t2:#f1b53c;--t3:#ff8c5d;--t4:#8e9ca5;--done:#6db4ff;color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-body);padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit}
+a{color:var(--route)}
+:focus-visible{outline:2px solid var(--route);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 32px}
+.eyebrow{font:600 13px var(--font-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.05;margin:0}
+h1{font-size:clamp(30px,6vw,44px)}
+h2{font-size:26px;margin:26px 0 10px}
+h3{font-size:20px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.mock{display:inline-block;font:600 11px var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--border);border-radius:4px;padding:1px 6px;vertical-align:middle}
+
+/* Kopf */
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ring{display:flex;align-items:center;gap:10px}
+.ring svg{width:58px;height:58px}
+.ring .bg{fill:none;stroke:var(--border);stroke-width:6}
+.ring .fg{fill:none;stroke:var(--done);stroke-width:6;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%}
+.ring b{font:700 26px var(--font-display);font-variant-numeric:tabular-nums}
+
+/* Navigation */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{flex:1;max-width:180px;border:0;background:none;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--muted);font:600 13px var(--font-display);letter-spacing:.06em;text-transform:uppercase}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-selected="true"]{color:var(--route)}
+@media (min-width:860px){
+  body{padding-bottom:0}
+  nav.tabs{position:sticky;top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--border)}
+  nav.tabs button{flex-direction:row;gap:8px;padding:14px 10px}
+}
+section.view{display:none}
+section.view.on{display:block}
+
+/* Kennzahlen */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.stat .v{font:700 30px/1 var(--font-display);font-variant-numeric:tabular-nums}
+.stat .l{font:600 12px var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+@media (max-width:620px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+
+/* Gebiets-Raster */
+.bingo{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:6px}
+.tile{position:relative;border:1px solid var(--border);border-radius:8px;padding:8px 8px 7px;background:var(--surface);cursor:pointer;text-align:left;min-height:62px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .nm{font:600 14px/1.1 var(--font-display)}
+.tile .tm{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 2px 2px 0}
+.tile.t1::before{background:var(--t1)}.tile.t2::before{background:var(--t2)}.tile.t3::before{background:var(--t3)}.tile.t4::before{background:var(--t4)}
+.tile.done{background:var(--done);border-color:var(--done);color:var(--surface)}
+.tile.done .tm{color:inherit;opacity:.8}
+.tile.done::after{content:"✓";position:absolute;right:7px;top:5px;font-weight:700}
+.tile.plan{border:2px dashed var(--route)}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:8px 0 12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+/* Nächster Trip */
+.next{display:flex;flex-direction:column;gap:8px}
+.next .when{font:700 22px var(--font-display)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:13px;background:var(--surface2)}
+.pill i{width:9px;height:9px;border-radius:50%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}
+.btn.pri{background:var(--route);border-color:var(--route);color:var(--surface)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Anbindungen */
+.src{display:flex;flex-direction:column}
+.src li{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.src li:last-child{border-bottom:0}
+.src ul{list-style:none;margin:0;padding:0}
+.ico{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font:700 14px var(--font-display);color:#fff}
+.st-ok{color:var(--t1);font-weight:600;font-size:13px}
+.st-warn{color:var(--t2);font-weight:600;font-size:13px}
+.st-off{color:var(--muted);font-weight:600;font-size:13px}
+
+/* Gebiete-Liste */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.chip{border:1px solid var(--border);border-radius:999px;background:var(--surface);padding:6px 12px;font-weight:500;font-size:14px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip i{width:10px;height:10px;border-radius:50%}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.list{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface2)}
+.chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;font-size:13px;font-weight:700}
+.row.done .chk{background:var(--done);border-color:var(--done);color:var(--surface)}
+.row .nm{font-weight:600}
+.row .sub{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .rt{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.d1{background:var(--t1)}.d2{background:var(--t2)}.d3{background:var(--t3)}.d4{background:var(--t4)}
+
+/* Planer */
+.combos{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.combo{text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.combo[aria-pressed="true"]{border-color:var(--route);box-shadow:0 0 0 1px var(--route) inset;background:var(--tint)}
+.combo .base{font-size:13px;color:var(--muted)}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:52px 64px minmax(0,1fr);gap:4px 10px;padding:0 0 12px;position:relative}
+.tl li .t{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+.mode{align-self:start;text-align:center;font:600 11px var(--font-display);letter-spacing:.08em;text-transform:uppercase;padding:2px 0;border-radius:4px;border:1.5px solid}
+.m-rail{border-color:var(--fg)}.m-bus{border-color:var(--route);color:var(--route)}.m-walk{border-color:var(--muted);color:var(--muted)}
+.m-ski{border-color:var(--t1);color:var(--t1)}.m-bed{border-color:var(--t2);color:var(--t2)}
+.tl .x small{display:block;color:var(--muted);font-size:13px}
+.day{font:700 14px var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 10px;padding-top:10px;border-top:1px solid var(--border)}
+.day:first-child{border-top:0;padding-top:0;margin-top:0}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.cmp .opt{border:1px solid var(--border);border-radius:10px;padding:12px}
+.cmp .opt.win{border-color:var(--t1);box-shadow:0 0 0 1px var(--t1) inset}
+.cmp .big{font:700 26px/1 var(--font-display);font-variant-numeric:tabular-nums}
+.cmp dl{margin:8px 0 0;display:grid;grid-template-columns:auto auto;gap:2px 10px;font-size:14px}
+.cmp dt{color:var(--muted)}
+.cmp dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--tint);font-size:14px}
+.warn{margin-top:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--t2);font-size:14px}
+
+/* Tagebuch */
+.entry{display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;margin-bottom:10px}
+.date{text-align:center;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:6px 0;align-self:start}
+.date b{display:block;font:700 26px/1 var(--font-display)}
+.date span{font:600 12px var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.entry .card{padding:14px}
+.ehead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.stars{color:var(--t2);letter-spacing:2px}
+.kv{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 6px}
+.kv div{font-variant-numeric:tabular-nums}
+.kv b{font:700 19px var(--font-display)}
+.kv span{font-size:12px;color:var(--muted);margin-left:3px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:12px;border-radius:4px;padding:1px 7px;background:var(--surface2);border:1px solid var(--border)}
+.tag.strava{border-color:var(--strava);color:var(--strava);background:transparent}
+.tag.pass{border-color:var(--route);color:var(--route);background:transparent}
+.tripband{font-size:13px;color:var(--t2);font-weight:600;margin:0 0 6px 74px}
+
+/* Dialog */
+dialog{border:1px solid var(--border);border-radius:14px;padding:0;background:var(--surface);color:var(--fg);width:min(560px,calc(100% - 24px));max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(10,20,26,.5)}
+.dlg{padding:18px;display:flex;flex-direction:column;gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:70px;resize:vertical}
+.acts{display:flex;flex-direction:column;gap:6px}
+.act{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;background:var(--surface)}
+.act[aria-pressed="true"]{border-color:var(--strava);box-shadow:0 0 0 1px var(--strava) inset}
+.act .s{font-size:13px;color:var(--muted)}
+.rate{display:flex;gap:4px}
+.rate button{border:0;background:none;font-size:24px;cursor:pointer;color:var(--border);padding:0 2px}
+.rate button.on{color:var(--t2)}
+
+/* Detail-Panel */
+.detail h3{font-size:28px}
+.steps{list-style:none;margin:10px 0;padding:0}
+.steps li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;padding-bottom:8px}
+.fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:15;border-radius:999px;padding:12px 18px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+@media (min-width:860px){.fab{bottom:24px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+
+/* Fotos */
+.photos{display:flex;gap:6px;margin:8px 0 4px;overflow-x:auto;scrollbar-width:none}
+.ph{flex:none;width:92px;height:92px;border-radius:8px;border:0;padding:0;cursor:pointer;background-size:cover;background-position:center;position:relative;overflow:hidden}
+.ph.more{display:grid;place-items:center;background:var(--surface2);border:1px solid var(--border);font:700 18px var(--font-display);color:var(--muted)}
+.ph svg{position:absolute;inset:0;width:100%;height:100%}
+.g0{background:linear-gradient(180deg,#5aa2e6 0%,#bfe0f7 55%,#f4f8fb 56%,#e3edf3 100%)}
+.g1{background:linear-gradient(180deg,#f7b267 0%,#f4845f 40%,#8a6fa8 56%,#e9e3ef 57%,#d6d0de 100%)}
+.g2{background:linear-gradient(180deg,#9fb4c2 0%,#d5dee4 55%,#f2f5f7 56%,#e2e8ec 100%)}
+.g3{background:linear-gradient(180deg,#2f6db5 0%,#7fb3e3 50%,#ffffff 51%,#dce8f0 100%)}
+.upl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.upl label.add{width:72px;height:72px;border:2px dashed var(--border);border-radius:8px;display:grid;place-items:center;cursor:pointer;color:var(--muted);font-size:26px}
+.upl label.add input{display:none}
+.upl .ph{width:72px;height:72px}
+#dlgPhoto{width:min(900px,calc(100% - 24px));background:#000;border:0}
+#dlgPhoto .box{position:relative}
+#dlgPhoto .box > div{width:100%;aspect-ratio:4/3;background-size:contain;background-repeat:no-repeat;background-position:center}
+#dlgPhoto .box > div.g0,#dlgPhoto .box > div.g1,#dlgPhoto .box > div.g2,#dlgPhoto .box > div.g3{background-size:cover}
+#dlgPhoto button{position:absolute;top:10px;right:10px}
+#dlgPhoto p{color:#ddd;margin:0;padding:10px 14px;font-size:14px}
+
+/* Rechnung */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;margin-top:14px}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.be .big{font:700 clamp(40px,9vw,64px)/1 var(--font-display);font-variant-numeric:tabular-nums}
+.bar{position:relative;height:18px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;margin:14px 0 6px}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--t1);border-radius:9px 0 0 9px}
+.bar .plan{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,var(--route) 0 4px,transparent 4px 8px);opacity:.55}
+.bar .goal{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg)}
+.barlab{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted);margin-top:8px}
+.key i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+table.calc{width:100%;border-collapse:collapse;font-size:14px}
+table.calc th{font:600 12px var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+table.calc td{padding:8px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+table.calc tr:last-child td{border-bottom:0}
+table.calc .r{text-align:right;white-space:nowrap}
+table.calc tr.cross td{background:var(--tint);font-weight:600}
+table.calc tr.planned td{color:var(--muted);font-style:italic}
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.pricein{width:76px;padding:4px 6px;text-align:right}
+.src-ok,.src-alt,.src-est{font-size:12px;font-weight:600;border-radius:4px;padding:1px 6px;white-space:nowrap}
+.src-ok{color:var(--t1);border:1px solid var(--t1)}
+.src-alt{color:var(--t2);border:1px solid var(--t2)}
+.src-est{color:var(--t3);border:1px dashed var(--t3)}
+.calcbox{display:flex;flex-direction:column;gap:8px}
+.calcbox .line{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+.calcbox .line.tot{border-top:1px solid var(--border);padding-top:8px;font-weight:700}
+</style>
+</head>
+<body>
+
+<nav class="tabs" role="tablist" aria-label="Bereiche">
+  <button role="tab" data-v="saison" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg>Saison</button>
+  <button role="tab" data-v="gebiete" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Gebiete</button>
+  <button role="tab" data-v="planen" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4M5 11h14"/><circle cx="9" cy="14" r=".6"/><circle cx="15" cy="14" r=".6"/></svg>Planen</button>
+  <button role="tab" data-v="tagebuch" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11M9 8h6"/></svg>Tagebuch</button>
+  <button role="tab" data-v="rechnung" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 8.5a4 4 0 100 7M7.5 11h6M7.5 13.5h6"/></svg>Rechnung</button>
+</nav>
+
+<div class="wrap">
+
+<!-- SAISON -->
+<section class="view on" id="v-saison">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Kärntner Skipass · Saison 2026/27</p>
+      <h1>Meine Skisaison</h1>
+    </div>
+    <div class="ring" aria-label="Besuchte Skigebiete">
+      <svg viewBox="0 0 60 60"><circle class="bg" cx="30" cy="30" r="24"/><circle class="fg" id="ringfg" cx="30" cy="30" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/></svg>
+      <div><b id="ringn">0/31</b><div class="small muted">Gebiete abgehakt</div></div>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="card next">
+      <p class="eyebrow">Nächster Trip</p>
+      <div class="when">Sa 13. – So 14. Feb</div>
+      <div><span class="pill"><i class="d2"></i>Lienz-Zettersfeld</span> <span class="pill"><i class="d3"></i>Sillian-Hochpustertal</span></div>
+      <p class="muted small" style="margin:0">1 Nacht in Lienz · 4 h 10 min Fahrzeit gesamt · 2 neue Gebiete</p>
+      <div class="btnrow"><button class="btn pri" data-go="planen">Trip ansehen</button><button class="btn">Schneelage</button></div>
+    </div>
+    <div class="card next">
+      <p class="eyebrow">Vorschlag fürs nächste Wochenende</p>
+      <div class="when">Weißbriach / Gitschtal</div>
+      <p class="muted small" style="margin:0">Noch offen · ca. 1,5 h ab Villach · lässt sich mit Nassfeld kombinieren (Skibus Hermagor)</p>
+      <div class="btnrow"><button class="btn" data-go="gebiete">Alle offenen Gebiete</button></div>
+    </div>
+  </div>
+
+  <h2>Alle 31 Gebiete</h2>
+  <div class="legend">
+    <span><i style="background:var(--done)"></i>Schon gefahren</span>
+    <span><i style="background:var(--t1)"></i>Tagesausflug gut</span>
+    <span><i style="background:var(--t2)"></i>Machbar, lange Anreise</span>
+    <span><i style="background:var(--t3)"></i>Mit Übernachtung</span>
+    <span><i style="background:var(--t4)"></i>Keine Öffi-Verbindung</span>
+  </div>
+  <div class="bingo" id="bingo"></div>
+
+  <h2>Datenquellen</h2>
+  <div class="card src">
+    <ul>
+      <li><div class="ico" style="background:var(--strava)">S</div><div><b>Strava</b><div class="small muted">Aktivitäten automatisch importieren (Webhook). Garmin synchronisiert schon zu Strava.</div></div><span class="st-ok">Verbunden</span></li>
+      <li><div class="ico" style="background:#1a1a1a">G</div><div><b>Garmin</b><div class="small muted">Alternativ: .fit-Datei hochladen. Die offizielle Garmin-API braucht eine Freischaltung als Entwickler.</div></div><span class="st-off">über Strava</span></li>
+      <li><div class="ico" style="background:var(--route)">P</div><div><b>Skipass (Skiline)</b><div class="small muted">Liftfahrten und Höhenmeter über die Skipassnummer. Es gibt keine offizielle API, deshalb vorerst manuell oder als Experiment.</div></div><span class="st-warn">Experiment</span></li>
+      <li><div class="ico" style="background:var(--t1)">Ö</div><div><b>Fahrplan (ÖBB / VAO)</b><div class="small muted">Echte Verbindungen für Hin- und Rückfahrt im Planer.</div></div><span class="st-warn">zu klären</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- GEBIETE -->
+<section class="view" id="v-gebiete">
+  <p class="eyebrow">Ab Villach Hbf mit Bahn und Bus</p>
+  <h1>Skigebiete</h1>
+  <p class="muted small" style="margin:6px 0 10px">Die Karte aus deinem Entwurf kommt hier oben hin. <span class="mock">Mockup</span></p>
+  <div class="filters" id="filters">
+    <button class="chip" data-f="all" aria-pressed="true">Alle</button>
+    <button class="chip" data-f="open" aria-pressed="false">Noch offen</button>
+    <button class="chip" data-f="done" aria-pressed="false">Gefahren</button>
+    <button class="chip" data-f="1" aria-pressed="false"><i class="d1"></i>Tagesausflug</button>
+    <button class="chip" data-f="3" aria-pressed="false"><i class="d3"></i>Mit Übernachtung</button>
+  </div>
+  <div class="list" id="list"></div>
+</section>
+
+<!-- PLANEN -->
+<section class="view" id="v-planen">
+  <p class="eyebrow">Tripplaner</p>
+  <h1>Kombis mit Übernachtung</h1>
+  <p class="muted" style="margin:6px 0 14px;max-width:62ch">Gebiete, die nah beieinander liegen, aber weit von Villach weg sind. Eine Nacht dort spart dir die zweite lange Anreise.</p>
+  <div class="combos" id="combos"></div>
+
+  <div class="grid2" style="margin-top:16px;align-items:start">
+    <div class="card">
+      <div class="ehead"><h3 id="plTitle"></h3><span class="mock">Beispielzeiten</span></div>
+      <p class="muted small" id="plSub" style="margin:2px 0 14px"></p>
+      <div id="plTl"></div>
+      <div class="btnrow" style="margin-top:6px">
+        <a class="btn" href="https://fahrplan.oebb.at/" target="_blank" rel="noopener">In ÖBB Scotty öffnen</a>
+        <button class="btn pri" id="plSave">Trip speichern</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Lohnt sich die Übernachtung?</h3>
+      <p class="muted small" style="margin:2px 0 12px">Vergleich mit zwei einzelnen Tagesausflügen ab Villach</p>
+      <div class="cmp" id="plCmp"></div>
+      <div class="verdict" id="plVerdict"></div>
+      <div class="warn" id="plWarn" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- TAGEBUCH -->
+<section class="view" id="v-tagebuch">
+  <p class="eyebrow">Tagebuch</p>
+  <h1>Meine Skitage</h1>
+  <p class="muted small" style="margin:6px 0 16px">Beispieldaten. Jeder Eintrag hakt das Gebiet ab und übernimmt die Werte aus Strava und, falls verfügbar, aus dem Skipass.</p>
+  <div id="diary"></div>
+</section>
+
+<!-- RECHNUNG -->
+<section class="view" id="v-rechnung">
+  <p class="eyebrow">Hat sich der Pass gerechnet?</p>
+  <h1>Rechnung</h1>
+  <div class="hero">
+    <div class="card be">
+      <p class="eyebrow" id="beLab"></p>
+      <div class="big" id="beBig"></div>
+      <p style="margin:6px 0 0" id="beSub"></p>
+      <div class="bar" aria-hidden="true"><div class="fill" id="barFill"></div><div class="plan" id="barPlan"></div><div class="goal" id="barGoal"></div></div>
+      <div class="barlab"><span>0 €</span><span id="barMax"></span></div>
+      <div class="key"><span><i style="background:var(--t1)"></i>Schon gefahren</span><span><i style="background:repeating-linear-gradient(45deg,var(--route) 0 3px,transparent 3px 6px)"></i>Geplante Trips</span><span><i style="background:var(--fg);width:2px"></i>Passpreis</span></div>
+    </div>
+    <div class="card calcbox">
+      <p class="eyebrow">Zusammenfassung</p>
+      <label class="f">Was hat der Pass gekostet?<input type="number" id="passPrice" value="611" min="0" step="1"></label>
+      <div class="line"><span>Wert der gefahrenen Tage</span><b id="sumDone"></b></div>
+      <div class="line"><span>Ø Tageskarte bisher</span><span id="avgDay"></span></div>
+      <div class="line"><span>Kosten pro Skitag mit Pass</span><span id="perDay"></span></div>
+      <div class="line tot"><span id="resLab">Ersparnis</span><span id="resVal"></span></div>
+    </div>
+  </div>
+
+  <h2>Skitage und Tageskarten</h2>
+  <p class="muted small" style="margin:-4px 0 10px">Jeder Tag zählt mit dem Preis der Tageskarte für Erwachsene in der Hauptsaison. Die markierte Zeile ist der Tag, an dem der Pass drin ist.</p>
+  <div class="tw"><table class="calc"><thead><tr><th>Datum</th><th>Skigebiet</th><th class="r">Tageskarte</th><th class="r">Summe</th></tr></thead><tbody id="calcRows"></tbody></table></div>
+
+  <h2>Tagespreise der Gebiete</h2>
+  <p class="muted small" style="margin:-4px 0 10px">Tageskarte für Erwachsene in der Hauptsaison, Recherche vom 01.11.2026. <span class="src-ok">2026/27</span> heißt aktueller Preis, <span class="src-alt">älter</span> heißt Vorjahr oder älter, <span class="src-est">Schätzung</span> heißt, ich habe keine Quelle gefunden. Du kannst jeden Wert ändern, die Rechnung passt sich sofort an.</p>
+  <div class="tw"><table class="calc"><thead><tr><th>Skigebiet</th><th class="r">Gefahren</th><th class="r">Stand</th><th class="r">Tageskarte €</th></tr></thead><tbody id="priceRows"></tbody></table></div>
+</section>
+
+</div>
+
+<button class="btn pri fab" id="fab">+ Skitag eintragen</button>
+
+<dialog id="dlgEntry">
+  <form method="dialog" class="dlg" id="formEntry">
+    <h3>Neuer Skitag</h3>
+    <div class="grid2" style="gap:10px">
+      <label class="f">Datum<input type="date" id="fDate" value="2027-01-23"></label>
+      <label class="f">Skigebiet<select id="fArea"></select></label>
+    </div>
+    <div>
+      <div class="small" style="font-weight:600;color:var(--muted);margin-bottom:4px">Aktivität aus Strava</div>
+      <div class="acts" id="fActs"></div>
+    </div>
+    <div class="grid2" style="gap:10px">
+      <label class="f">Schnee<select id="fSnow"><option>Pulver</option><option>Griffig</option><option>Kunstschnee, hart</option><option>Sulz</option><option>Eisig</option></select></label>
+      <div class="f"><span class="small" style="font-weight:600;color:var(--muted)">Bewertung</span><div class="rate" id="fRate"></div></div>
+    </div>
+    <div class="f"><span class="small" style="font-weight:600;color:var(--muted)">Fotos</span>
+      <div class="upl" id="fPhotos"><label class="add" title="Fotos hinzufügen">+<input type="file" id="fFile" accept="image/*" multiple></label></div>
+    </div>
+    <label class="f">Notiz<textarea id="fNote" placeholder="Wie war's? Welche Piste, welche Hütte?"></textarea></label>
+    <label class="f">Anreise tatsächlich<input id="fTravel" placeholder="z. B. RJ 7:12 → Spittal, Bus 180 verpasst"></label>
+    <div class="btnrow" style="justify-content:flex-end">
+      <button class="btn" value="cancel" formnovalidate>Abbrechen</button>
+      <button class="btn pri" value="ok">Speichern und abhaken</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgPhoto"><div class="box"><div id="phBig"></div><button class="btn" id="phClose" aria-label="Schließen">✕</button><p id="phCap"></p></div></dialog>
+<dialog id="dlgArea"><div class="dlg detail" id="areaBody"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var TIER={1:'Tagesausflug gut',2:'Machbar, lange Anreise',3:'Nur mit Übernachtung sinnvoll',4:'Keine Winterverbindung gefunden'};
+// Aus dem Entwurf übernommen: Name, Stufe, Pistenkm, Dauer, Anreise
+var A=[
+['gerlitzen','Gerlitzen Alpe',1,53,'25 min','S-Bahn → Annenheim, 5 min zu Fuß'],
+['nassfeld','Nassfeld',1,110,'1 h 5 min','SB4 direkt, oder S4 → Hermagor + Skibus'],
+['dreilaendereck','Dreiländereck',1,15,'40 min','S-Bahn → Arnoldstein + Bus oder Shuttle'],
+['hrast','Skieldorado Hrast',1,2,'35 min','S4 durchs Gailtal'],
+['goldeck','Sportberg Goldeck',1,25,'1 h','Zug → Spittal + Bus 5112 oder 180'],
+['ankogel','Ankogel',1,13,'1 h 10 min','Tauernbahn → Mallnitz + Skibus 103'],
+['moelltaler','Mölltaler Gletscher',2,43,'1 h 45 min','Tauernbahn → Mallnitz + Skibus 5115'],
+['bkk','Bad Kleinkirchheim',2,103,'1 h 45 min','Zug → Spittal + Bus 180/184'],
+['weissensee','Weissensee',2,6,'1 h 30 min','Zug → Greifenburg + Bus 151'],
+['weissbriach','Weißbriach / Gitschtal',2,5,'1 h 30 min','S4 → Hermagor + Skibus'],
+['koetschach','Kötschach-Mauthen',2,6,'1 h 45 min','S4 → Hermagor + Mobilbüro-Linien'],
+['petzen','Petzen',2,17,'1 h 45 min','Via Klagenfurt → Bleiburg + Shuttle'],
+['lienz','Lienz-Zettersfeld',2,21,'2 h','Zug → Lienz + Linie 1/2'],
+['katschberg','Katschberg',2,80,'2 h 15 min','Zug → Spittal + 120 + 130/131 + Skibus'],
+['emberger','Emberger Alm',2,10,'1 h 30 min','Zug → Berg im Drautal + Skibus'],
+['heiligenblut','Großglockner / Heiligenblut',3,55,'2 h 45 min','Zug → Spittal + Direktbus'],
+['turracher','Turracher Höhe',3,42,'2 h','→ Feldkirchen + Linie 420'],
+['hochrindl','Hochrindl',3,20,'1 h 50 min','→ Feldkirchen + Linie 425 (Rufbus)'],
+['falkert','Heidi-Alm / Falkert',3,11,'2 h 10 min','→ Feldkirchen + 420 + Nockmobil'],
+['simonhoehe','Simonhöhe',3,13,'unklar','→ Feldkirchen + Linie 422'],
+['sillian','Sillian-Hochpustertal',3,22,'2 h 30 min','Zug → Lienz + Skibus'],
+['obertilliach','Obertilliach',3,16,'3 h','Zug → Lienz + Bus Sillian/Lesachtal'],
+['kartitsch','Kanterlift / Kartitsch',3,5,'3 h','Zug → Lienz + Bus über Sillian'],
+['matrei','Matrei-Kals',3,47,'3 h 10 min','Zug → Lienz + Regionalbus'],
+['stjakob','St. Jakob i. D.',3,35,'3 h 15 min','Zug → Lienz + Regionalbus'],
+['praegraten','Prägraten',3,2,'3 h 20 min','Zug → Lienz + Bus + Skibus'],
+['klippitz','Klippitztörl',4,28,'–','LAVmobil ab Wolfsberg (bestellen)'],
+['koralpe','Koralpe',4,18,'–','Keine Winterlinie'],
+['weinebene','Weinebene',4,18,'–','Keine Winterlinie'],
+['flattnitz','Flattnitz',4,2,'–','Keine Winterlinie'],
+['bodental','Bodental',4,1,'–','Unklar, ab Ferlach']
+].map(function(r){return {id:r[0],n:r[1],tier:r[2],km:r[3],time:r[4],short:r[5]};});
+var BY={};A.forEach(function(a){BY[a.id]=a;});
+
+var DIARY=[
+ {d:'2027-01-16',a:'bkk',hm:6840,km:58,runs:22,vmax:78,lifts:24,snow:'Pulver',r:5,src:['strava','pass'],note:'Erster richtiger Pulvertag. Abfahrt Strohsack zweimal, Mittag in der Nockalm.',travel:'RJ 7:12 → Spittal, Bus 180 um 7:55'},
+ {d:'2027-01-09',a:'gerlitzen',hm:4120,km:37,runs:16,vmax:71,lifts:17,snow:'Griffig',r:4,src:['strava'],note:'Nur Vormittag, nach Mittag Nebel. Die neue Kanzelbahn II ist schnell.',travel:'S-Bahn 8:04 → Annenheim'},
+ {d:'2027-01-02',a:'nassfeld',hm:7350,km:64,runs:25,vmax:82,lifts:27,snow:'Kunstschnee, hart',r:4,src:['strava','pass'],note:'Voll wegen Ferien. Tressdorfer Almbahn ausprobiert.',travel:'SB4 8:00 ab Villach Hbf, Rückfahrt 16:03'},
+ {d:'2026-12-28',a:'ankogel',hm:3980,km:29,runs:12,vmax:69,lifts:13,snow:'Pulver',r:5,src:['strava'],trip:'Mölltal-Wochenende · Übernachtung Mallnitz',note:'Ruhig, kaum Leute. Ideal nach dem Gletschertag.',travel:'Skibus 103 ab Mallnitz'},
+ {d:'2026-12-27',a:'moelltaler',hm:5210,km:41,runs:15,vmax:74,lifts:16,snow:'Griffig',r:4,src:['strava','pass'],trip:'Mölltal-Wochenende · Übernachtung Mallnitz',note:'Windig oben, unten super.',travel:'RJ 6:48 → Mallnitz, Skibus 5115'},
+ {d:'2026-12-20',a:'goldeck',hm:3150,km:24,runs:11,vmax:66,lifts:9,snow:'Kunstschnee, hart',r:3,src:['strava'],note:'Noch wenig Schnee, nur die Hauptpiste offen.',travel:'Zug → Spittal, Bus 5112'},
+ {d:'2026-12-13',a:'dreilaendereck',hm:2280,km:18,runs:10,vmax:61,lifts:8,snow:'Kunstschnee, hart',r:3,src:['strava'],note:'Saisonstart kurz nach der Arbeit.',travel:'Bahnhofshuttle ab Villach Hbf'}
+];
+
+// Beispielfotos (Platzhalter), echte Fotos kommen über den Upload
+var SAMPLE_PH={
+ '2027-01-16':[[3,'Pulver am Strohsack'],[0,'Blick zur Kaiserburg'],[1,'Letzte Abfahrt im Abendlicht'],[2,'Mittag in der Nockalm'],[0,'Gondel']],
+ '2027-01-09':[[2,'Nebel ab Mittag'],[0,'Kanzelbahn II']],
+ '2027-01-02':[[3,'Tressdorfer Alm'],[0,'Gartnerkofel']],
+ '2026-12-28':[[3,'Ankogel ganz allein']],
+ '2026-12-27':[[1,'Gletscher am Morgen'],[2,'Wind am Schareck']]
+};
+DIARY.forEach(function(e){e.ph=(SAMPLE_PH[e.d]||[]).map(function(p){return {g:p[0],c:p[1]};});});
+
+// Tageskarte Erwachsene, Hauptsaison. Recherche 01.11.2026.
+// s: 'ok' = Preis 2026/27, 'alt' = Vorjahr oder älter, 'est' = Schätzung ohne Quelle
+var PRICE_SRC={
+ gerlitzen:[73,'ok','2026/27'],nassfeld:[73,'ok','2026/27, Nebensaison 67,50 €'],bkk:[73,'ok','2026/27'],katschberg:[73,'ok','2026/27'],
+ moelltaler:[72,'ok','2026/27'],turracher:[72.5,'ok','2026/27'],goldeck:[64.5,'ok','2026/27, inkl. 2 h Hallenbad'],
+ petzen:[49,'ok','2026/27, ab 9 Uhr'],klippitz:[49,'ok','2026/27'],koralpe:[43.5,'ok','2026/27'],
+ lienz:[74,'ok','2026/27'],sillian:[74,'ok','2026/27'],matrei:[74,'ok','2026/27'],stjakob:[74,'ok','2026/27'],
+ obertilliach:[52,'ok','2026/27, ab 6.3. 47 €'],falkert:[34,'ok','2026/27, vermutlich Erwachsene'],
+ weissensee:[52.4,'alt','bergfex, Saison unklar'],bodental:[36,'alt','bergfex, Saison unklar'],
+ ankogel:[54,'alt','2025/26'],hochrindl:[52,'alt','2025/26'],simonhoehe:[47,'alt','2025/26'],weinebene:[38.5,'alt','2025/26'],
+ heiligenblut:[47,'alt','dynamische Preise, ab ca. 47 €'],weissbriach:[34,'alt','Stand 2023'],hrast:[28,'alt','älterer Stand'],
+ dreilaendereck:[32.5,'alt','älterer Stand, Betrieb nach Insolvenz unklar'],flattnitz:[24,'alt','älterer Stand, Betrieb nach Insolvenz unklar'],
+ emberger:[42,'est','keine Quelle gefunden'],koetschach:[32,'est','keine Quelle gefunden'],kartitsch:[30,'est','keine Quelle gefunden'],praegraten:[25,'est','keine Quelle gefunden']
+};
+var PRICE={};Object.keys(PRICE_SRC).forEach(function(k){PRICE[k]=PRICE_SRC[k][0];});
+var PLANNED_DAYS=[{d:'2027-02-13',a:'lienz'},{d:'2027-02-14',a:'sillian'}];
+
+var COMBOS=[
+ {id:'osttirol',t:'Lienz + Sillian',base:'Übernachtung Lienz',areas:['lienz','sillian'],nights:1,
+  travelSingle:[240,300],travelTrip:250,hotel:85,ski:[0,0],gainSki:'+3 h',
+  warn:'Der Skibus ab Lienz Richtung Sillian ist laut Recherche gratis. Andere Busse hinter Lienz sind nicht im Kärnten Ticket enthalten, das prüft die App bei jeder Verbindung.',
+  tl:[
+   ['Tag 1 · Sa 13. Feb'],
+   ['06:42','rail','Villach Hbf → Lienz','REX 1817 · 1 h 52 min'],
+   ['08:45','bus','Lienz Bf → Zettersfeldbahn','Linie 1 · 8 min · gratis in Skikleidung'],
+   ['09:00','ski','Lienz-Zettersfeld','bis ca. 16:00'],
+   ['16:30','bed','Übernachtung Lienz','z. B. Pension nahe Bahnhof · ca. 85 €'],
+   ['Tag 2 · So 14. Feb'],
+   ['07:55','bus','Lienz Bf → Sillian','Gratis-Skibus · ca. 45 min'],
+   ['08:45','ski','Sillian-Hochpustertal','bis ca. 15:30'],
+   ['15:50','bus','Sillian → Lienz Bf','Skibus · ca. 45 min'],
+   ['16:58','rail','Lienz → Villach Hbf','REX 1830 · an 18:50']
+  ]},
+ {id:'nock',t:'Turracher Höhe + Falkert',base:'Übernachtung Turracher Höhe',areas:['turracher','falkert'],nights:1,
+  travelSingle:[240,260],travelTrip:280,hotel:110,gainSki:'+2 h',
+  warn:'Linie 420 hat im Winter sehr wenige Kurse und Falkert hängt am Rufbus (Nockmobil). Vorher reservieren.',
+  tl:[
+   ['Tag 1'],['07:10','rail','Villach Hbf → Feldkirchen','S-Bahn · 25 min'],['07:45','bus','Feldkirchen → Turracher Höhe','Linie 420 · ca. 50 min'],['08:50','ski','Turracher Höhe','ganzer Tag'],['16:30','bed','Übernachtung Turracher Höhe','ca. 110 €'],
+   ['Tag 2'],['08:10','bus','Turracher Höhe → Patergassen','Linie 420'],['08:40','bus','Patergassen → Falkert','Nockmobil · Rufbus, Vortag buchen'],['09:15','ski','Heidi-Alm / Falkert','bis 15:30'],['16:00','bus','Falkert → Feldkirchen','Nockmobil + 420'],['17:40','rail','Feldkirchen → Villach Hbf','an 18:05']
+  ]},
+ {id:'spittal',t:'Bad Kleinkirchheim + Katschberg',base:'Übernachtung Spittal oder Gmünd',areas:['bkk','katschberg'],nights:1,
+  travelSingle:[210,270],travelTrip:330,hotel:75,gainSki:'+1 h',
+  warn:'',
+  tl:[
+   ['Tag 1'],['07:12','rail','Villach Hbf → Spittal','RJ · 30 min'],['07:55','bus','Spittal → Bad Kleinkirchheim','Linie 180 · ca. 45 min'],['08:45','ski','Bad Kleinkirchheim','bis 16:00'],['16:20','bus','BKK → Spittal → Gmünd','180 + 120'],['17:45','bed','Übernachtung Gmünd','ca. 75 €'],
+   ['Tag 2'],['07:30','bus','Gmünd → Rennweg','Linie 130 · ca. 25 min'],['08:05','bus','Rennweg → Katschberghöhe','Gratis-Skibus'],['08:30','ski','Katschberg','bis 15:30'],['15:45','bus','Katschberg → Spittal','Skibus + 130 + 120'],['17:20','rail','Spittal → Villach Hbf','an 17:52']
+  ]},
+ {id:'matrei',t:'Matrei-Kals + Prägraten + St. Jakob',base:'2 Nächte in Matrei',areas:['matrei','praegraten','stjakob'],nights:2,
+  travelSingle:[380,400,390],travelTrip:420,hotel:180,gainSki:'+8 h',
+  warn:'Regionalbusse hinter Lienz sind nicht im Kärnten Ticket enthalten. Rechne mit ca. 20–30 € extra für die Busse.',
+  tl:[
+   ['Tag 1'],['06:42','rail','Villach Hbf → Lienz','REX · 1 h 52 min'],['08:45','bus','Lienz → Matrei','Regionalbus 950X · ca. 30 min'],['09:30','ski','Matrei-Kals','bis 16:00'],['16:30','bed','Übernachtung Matrei','2 Nächte · ca. 180 €'],
+   ['Tag 2'],['08:15','bus','Matrei → Prägraten','Gratis-Skibus'],['08:45','ski','Prägraten','kleines Gebiet, bis Mittag'],['13:00','bus','Prägraten → Matrei','Skibus'],
+   ['Tag 3'],['07:45','bus','Matrei → St. Jakob','Regionalbus über Huben'],['08:40','ski','St. Jakob i. D.','bis 15:00'],['15:20','bus','St. Jakob → Lienz','ca. 1 h'],['16:58','rail','Lienz → Villach Hbf','an 18:50']
+  ]}
+];
+
+var visited={};DIARY.forEach(function(e){visited[e.a]=true;});
+var planned={lienz:true,sillian:true};
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function fmt(n){return n.toLocaleString('de-AT');}
+function hm(min){var h=Math.floor(min/60),m=min%60;return h+' h'+(m?' '+m+' min':'');}
+function toast(t){var el=$('toast');el.textContent=t;el.classList.add('on');setTimeout(function(){el.classList.remove('on');},1800);}
+
+/* Tabs */
+var tabs=document.querySelectorAll('nav.tabs button');
+function show(v){
+  tabs.forEach(function(b){b.setAttribute('aria-selected',b.dataset.v===v?'true':'false');});
+  document.querySelectorAll('section.view').forEach(function(s){s.classList.toggle('on',s.id==='v-'+v);});
+  window.scrollTo(0,0);
+}
+tabs.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.v);});});
+document.addEventListener('click',function(e){var g=e.target.closest('[data-go]');if(g){show(g.dataset.go);}});
+
+/* Saison */
+function renderSeason(){
+  var n=Object.keys(visited).length;
+  $('ringn').textContent=n+'/31';
+  $('ringfg').setAttribute('stroke-dashoffset',(150.8*(1-n/31)).toFixed(1));
+  var t={days:DIARY.length,hm:0,km:0,lifts:0};
+  DIARY.forEach(function(e){t.hm+=e.hm;t.km+=e.km;t.lifts+=e.lifts;});
+  $('stats').innerHTML=[[t.days,'Skitage'],[fmt(t.hm),'Höhenmeter'],[fmt(t.km),'Pisten-km'],[t.lifts,'Liftfahrten']]
+    .map(function(s){return '<div class="stat"><div class="v">'+s[0]+'</div><div class="l">'+s[1]+'</div></div>';}).join('');
+  $('bingo').innerHTML=A.map(function(a){
+    var c='tile t'+a.tier+(visited[a.id]?' done':'')+(planned[a.id]&&!visited[a.id]?' plan':'');
+    return '<button class="'+c+'" data-area="'+a.id+'"><span class="nm">'+esc(a.n)+'</span><span class="tm">'+(visited[a.id]?'gefahren':planned[a.id]?'geplant':esc(a.time))+'</span></button>';
+  }).join('');
+}
+
+/* Gebiete */
+var filter='all';
+function renderList(){
+  var rows=A.filter(function(a){
+    if(filter==='open'){return !visited[a.id];}
+    if(filter==='done'){return visited[a.id];}
+    if(filter==='1'||filter==='3'){return String(a.tier)===filter;}
+    return true;
+  });
+  $('list').innerHTML=rows.map(function(a){
+    var cnt=DIARY.filter(function(e){return e.a===a.id;}).length;
+    return '<button class="row'+(visited[a.id]?' done':'')+'" data-area="'+a.id+'"><span class="chk">'+(visited[a.id]?'✓':'')+'</span>'+
+      '<span style="min-width:0"><span class="nm"><span class="dot d'+a.tier+'"></span>'+esc(a.n)+'</span><span class="sub" style="display:block">'+esc(a.short)+'</span></span>'+
+      '<span class="rt">'+esc(a.time)+'<br><span class="muted">'+(cnt?cnt+'× gefahren':planned[a.id]?'geplant':a.km+' km Piste')+'</span></span></button>';
+  }).join('')||'<p class="muted" style="padding:14px;margin:0">Keine Treffer.</p>';
+}
+$('filters').addEventListener('click',function(e){
+  var b=e.target.closest('.chip');if(!b){return;}
+  filter=b.dataset.f;
+  this.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',c===b?'true':'false');});
+  renderList();
+});
+
+/* Gebiets-Detail */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-area]');if(!t){return;}
+  var a=BY[t.dataset.area];
+  var visits=DIARY.filter(function(x){return x.a===a.id;});
+  var combo=COMBOS.filter(function(c){return c.areas.indexOf(a.id)>=0;})[0];
+  $('areaBody').innerHTML=
+    '<div class="ehead"><span class="pill"><i class="d'+a.tier+'"></i>'+TIER[a.tier]+'</span><button class="btn" id="closeArea" aria-label="Schließen">✕</button></div>'+
+    '<h3>'+esc(a.n)+'</h3>'+
+    '<p class="muted" style="margin:0">'+a.km+' km Piste · '+esc(a.time)+' ab Villach Hbf</p>'+
+    '<div><p class="eyebrow" style="margin-top:6px">Anreise</p><p style="margin:0">'+esc(a.short)+'</p>'+
+    '<p class="small muted" style="margin:4px 0 0">Live-Verbindung für morgen früh: <span class="mock">kommt aus Fahrplan-API</span></p></div>'+
+    (combo?'<div class="verdict">Lässt sich kombinieren: <b>'+esc(combo.t)+'</b> ('+esc(combo.base)+')</div>':'')+
+    '<div><p class="eyebrow" style="margin-top:6px">Meine Besuche</p>'+(visits.length?visits.map(function(v){return '<div class="small">'+dstr(v.d)+' · '+fmt(v.hm)+' Hm · '+'★'.repeat(v.r)+'</div>';}).join(''):'<p class="small muted" style="margin:0">Noch nicht gefahren.</p>')+'</div>'+
+    '<div class="btnrow">'+(combo?'<button class="btn" data-combo="'+combo.id+'">Trip planen</button>':'')+'<button class="btn pri" data-new="'+a.id+'">Skitag eintragen</button></div>';
+  $('dlgArea').showModal();
+});
+document.addEventListener('click',function(e){
+  if(e.target.id==='closeArea'){$('dlgArea').close();}
+  var c=e.target.closest('[data-combo]');
+  if(c&&c.closest('#dlgArea')){$('dlgArea').close();selectCombo(c.dataset.combo);show('planen');}
+  var n=e.target.closest('[data-new]');
+  if(n){$('dlgArea').close();openEntry(n.dataset.new);}
+});
+
+/* Planer */
+var curCombo='osttirol';
+function renderCombos(){
+  $('combos').innerHTML=COMBOS.map(function(c){
+    var newN=c.areas.filter(function(id){return !visited[id];}).length;
+    return '<button class="card combo" data-cmb="'+c.id+'" aria-pressed="'+(c.id===curCombo)+'"><h3>'+esc(c.t)+'</h3><span class="base">'+esc(c.base)+'</span>'+
+      '<span>'+c.areas.map(function(id){return '<span class="dot d'+BY[id].tier+'"></span>';}).join('')+' <span class="small">'+newN+(newN===1?' neues Gebiet · ':' neue Gebiete · ')+c.gainSki+' Skizeit</span></span></button>';
+  }).join('');
+}
+$('combos').addEventListener('click',function(e){var b=e.target.closest('[data-cmb]');if(b){selectCombo(b.dataset.cmb);}});
+function selectCombo(id){
+  curCombo=id;renderCombos();
+  var c=COMBOS.filter(function(x){return x.id===id;})[0];
+  $('plTitle').textContent=c.t;
+  $('plSub').textContent=c.base+' · '+(c.nights+1)+' Tage';
+  var html='',open=false;
+  c.tl.forEach(function(s){
+    if(s.length===1){if(open){html+='</ol>';}html+='<div class="day">'+esc(s[0])+'</div><ol class="tl">';open=true;return;}
+    var lab={rail:'Bahn',bus:'Bus',walk:'Fuß',ski:'Ski',bed:'Nacht'}[s[1]];
+    html+='<li><span class="t">'+s[0]+'</span><span class="mode m-'+s[1]+'">'+lab+'</span><span class="x">'+esc(s[2])+'<small>'+esc(s[3])+'</small></span></li>';
+  });
+  if(open){html+='</ol>';}
+  $('plTl').innerHTML=html;
+  var single=c.travelSingle.reduce(function(a,b){return a+b;},0);
+  $('plCmp').innerHTML=
+    '<div class="opt"><div class="small muted">'+c.areas.length+' Tagesausflüge</div><div class="big">'+hm(single)+'</div><div class="small muted">im Zug und Bus</div><dl><dt>Kosten</dt><dd>0 €</dd><dt>Skizeit</dt><dd>kürzer</dd></dl></div>'+
+    '<div class="opt win"><div class="small muted">Trip mit '+c.nights+' Nacht'+(c.nights>1?'en':'')+'</div><div class="big">'+hm(c.travelTrip)+'</div><div class="small muted">im Zug und Bus</div><dl><dt>Kosten</dt><dd>ca. '+c.hotel+' €</dd><dt>Skizeit</dt><dd>'+c.gainSki+'</dd></dl></div>';
+  var saved=single-c.travelTrip;
+  $('plVerdict').innerHTML='<b>'+(saved>60?'Lohnt sich':'Knapp')+'.</b> Du sparst '+hm(Math.max(saved,0))+' Fahrzeit und stehst früher auf der Piste. Ca. '+Math.round(c.hotel/Math.max(saved/60,1))+' € pro gewonnener Stunde.';
+  $('plWarn').hidden=!c.warn;$('plWarn').textContent=c.warn||'';
+}
+$('plSave').addEventListener('click',function(){toast('Trip gespeichert (Mockup)');});
+
+/* Tagebuch */
+function dstr(d){var x=new Date(d+'T12:00');return x.toLocaleDateString('de-AT',{weekday:'short',day:'numeric',month:'short'});}
+function renderDiary(){
+  var html='',lastTrip=null;
+  DIARY.forEach(function(e){
+    var a=BY[e.a],x=new Date(e.d+'T12:00');
+    if(e.trip&&e.trip!==lastTrip){html+='<div class="tripband">↳ '+esc(e.trip)+'</div>';}
+    lastTrip=e.trip||null;
+    html+='<div class="entry"><div class="date"><b>'+x.getDate()+'</b><span>'+x.toLocaleDateString('de-AT',{month:'short'})+'</span></div>'+
+      '<div class="card"><div class="ehead"><h3><span class="dot d'+a.tier+'"></span>'+esc(a.n)+'</h3><span class="stars" aria-label="'+e.r+' von 5">'+'★'.repeat(e.r)+'<span style="color:var(--border)">'+'★'.repeat(5-e.r)+'</span></span></div>'+
+      '<div class="kv"><div><b>'+fmt(e.hm)+'</b><span>Hm</span></div><div><b>'+e.km+'</b><span>km</span></div><div><b>'+e.runs+'</b><span>Abfahrten</span></div><div><b>'+e.vmax+'</b><span>km/h max</span></div>'+(e.src.indexOf('pass')>=0?'<div><b>'+e.lifts+'</b><span>Liftfahrten</span></div>':'')+'</div>'+
+      (e.note?'<p style="margin:4px 0">'+esc(e.note)+'</p>':'')+
+      photoStrip(e)+
+      '<div class="tags">'+(e.src.indexOf('strava')>=0?'<span class="tag strava">Strava</span>':'')+(e.src.indexOf('pass')>=0?'<span class="tag pass">Skipass</span>':'')+'<span class="tag">'+esc(e.snow)+'</span>'+(e.travel?'<span class="tag">🚆 '+esc(e.travel)+'</span>':'')+'</div></div></div>';
+  });
+  $('diary').innerHTML=html;
+}
+
+/* Fotos */
+var MTN='<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,60 22,34 36,48 58,22 80,44 100,32 100,62 0,62" fill="rgba(255,255,255,.55)"/><polygon points="52,28 58,22 64,30 60,29 56,32" fill="#fff"/></svg>';
+function phStyle(p){return p.url?' style="background-image:url(\''+p.url+'\')"':'';}
+function phClass(p){return p.url?'':' g'+p.g;}
+function photoStrip(e){
+  if(!e.ph||!e.ph.length){return '';}
+  var idx=DIARY.indexOf(e),max=4,h='<div class="photos">';
+  e.ph.slice(0,max).forEach(function(p,i){
+    if(i===max-1&&e.ph.length>max){h+='<button class="ph more" data-e="'+idx+'" data-i="'+i+'">+'+(e.ph.length-max+1)+'</button>';return;}
+    h+='<button class="ph'+phClass(p)+'"'+phStyle(p)+' data-e="'+idx+'" data-i="'+i+'" aria-label="'+esc(p.c)+'">'+(p.url?'':MTN)+'</button>';
+  });
+  return h+'</div>';
+}
+var lb={e:0,i:0};
+function showPhoto(){
+  var e=DIARY[lb.e],p=e.ph[lb.i];
+  var big=$('phBig');big.className=phClass(p).trim();big.style.backgroundImage=p.url?'url(\''+p.url+'\')':'';
+  big.innerHTML=p.url?'':MTN;
+  $('phCap').textContent=BY[e.a].n+' · '+dstr(e.d)+' · '+p.c+'  ('+(lb.i+1)+'/'+e.ph.length+', tippen für nächstes)';
+}
+$('diary').addEventListener('click',function(ev){
+  var b=ev.target.closest('.ph');if(!b){return;}
+  lb={e:+b.dataset.e,i:+b.dataset.i};showPhoto();$('dlgPhoto').showModal();
+});
+$('phBig').addEventListener('click',function(){lb.i=(lb.i+1)%DIARY[lb.e].ph.length;showPhoto();});
+$('phClose').addEventListener('click',function(){$('dlgPhoto').close();});
+
+var newPh=[];
+function renderUpl(){
+  var box=$('fPhotos');
+  box.querySelectorAll('.ph').forEach(function(n){n.remove();});
+  newPh.forEach(function(p){var d=document.createElement('div');d.className='ph';d.style.backgroundImage='url(\''+p.url+'\')';d.title=p.c;box.appendChild(d);});
+}
+$('fFile').addEventListener('change',function(){
+  Array.prototype.forEach.call(this.files,function(f){newPh.push({url:URL.createObjectURL(f),c:f.name});});
+  this.value='';renderUpl();
+});
+
+/* Rechnung */
+function eur(n){return n.toLocaleString('de-AT',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})+' €';}
+function renderCalc(){
+  var pass=Math.max(+$('passPrice').value||0,0);
+  var days=DIARY.slice().sort(function(a,b){return a.d<b.d?-1:1;});
+  var sum=0,cross=null,rows='';
+  days.forEach(function(e){
+    var p=PRICE[e.a]||0;sum+=p;
+    var isCross=cross===null&&sum>=pass&&pass>0;if(isCross){cross=e;}
+    rows+='<tr'+(isCross?' class="cross"':'')+'><td>'+dstr(e.d)+'</td><td>'+esc(BY[e.a].n)+(isCross?' · Pass drin ✓':'')+'</td><td class="r">'+eur(p)+'</td><td class="r">'+eur(sum)+'</td></tr>';
+  });
+  var done=sum,psum=sum;
+  PLANNED_DAYS.forEach(function(e){
+    var p=PRICE[e.a]||0;psum+=p;
+    var isCross=cross===null&&psum>=pass&&pass>0;if(isCross){cross=e;}
+    rows+='<tr class="planned'+(isCross?' cross':'')+'"><td>'+dstr(e.d)+'</td><td>'+esc(BY[e.a].n)+' (geplant)'+(isCross?' · Pass drin ✓':'')+'</td><td class="r">'+eur(p)+'</td><td class="r">'+eur(psum)+'</td></tr>';
+  });
+  $('calcRows').innerHTML=rows;
+  var rest=pass-done,avg=days.length?done/days.length:0;
+  if(rest>0){
+    $('beLab').textContent='Noch offen bis der Pass drin ist';
+    $('beBig').textContent=eur(rest);
+    var after=pass-psum;
+    $('beSub').innerHTML='Das sind etwa <b>'+Math.ceil(rest/(avg||55))+' weitere Skitage</b> zu je ca. '+eur(Math.round(avg||55))+'. '+
+      (after<=0?'Mit dem geplanten Osttirol-Trip bist du drüber.':'Nach dem geplanten Trip fehlen noch '+eur(after)+'.');
+  }else{
+    $('beLab').textContent='Der Pass hat sich gerechnet';
+    $('beBig').textContent='+'+eur(-rest);
+    $('beSub').innerHTML='Drin seit <b>'+dstr(cross.d)+'</b> ('+esc(BY[cross.a].n)+'). Jeder weitere Tag ist gespart.';
+  }
+  var max=Math.max(pass,psum)*1.08||1;
+  $('barFill').style.width=(done/max*100)+'%';
+  $('barPlan').style.left=(done/max*100)+'%';$('barPlan').style.width=((psum-done)/max*100)+'%';
+  $('barGoal').style.left=(pass/max*100)+'%';
+  $('barMax').textContent='Passpreis '+eur(pass);
+  $('sumDone').textContent=eur(done);
+  $('avgDay').textContent=days.length?eur(avg):'–';
+  $('perDay').textContent=days.length?eur(pass/days.length):'–';
+  $('resLab').textContent=rest>0?'Noch nicht drin':'Ersparnis';
+  $('resVal').textContent=rest>0?'−'+eur(rest):'+'+eur(-rest);
+  $('resVal').style.color=rest>0?'var(--t3)':'var(--t1)';
+}
+function renderPrices(){
+  $('priceRows').innerHTML=A.map(function(a){
+    var n=DIARY.filter(function(e){return e.a===a.id;}).length;
+    var s=PRICE_SRC[a.id],lab={ok:'2026/27',alt:'älter',est:'Schätzung'}[s[1]];
+    return '<tr><td><span class="dot d'+a.tier+'"></span>'+esc(a.n)+'<small style="display:block" class="muted">'+esc(s[2])+'</small></td><td class="r">'+(n?n+'×':'–')+'</td><td class="r"><span class="src-'+s[1]+'">'+lab+'</span></td><td class="r"><input class="pricein" type="number" min="0" step="0.5" data-price="'+a.id+'" value="'+PRICE[a.id]+'" aria-label="Tageskarte '+esc(a.n)+'"></td></tr>';
+  }).join('');
+}
+$('priceRows').addEventListener('input',function(e){var t=e.target;if(t.dataset.price){PRICE[t.dataset.price]=+t.value||0;renderCalc();}});
+$('passPrice').addEventListener('input',renderCalc);
+
+/* Neuer Eintrag */
+var ACTS=[
+ {id:1,t:'Skifahren am Vormittag',s:'Sa 23. Jan · 5.920 Hm · 49 km',hm:5920,km:49,runs:19,vmax:76},
+ {id:2,t:'Abfahrtsski',s:'Fr 22. Jan · 1.210 Hm · 9 km (Flutlicht)',hm:1210,km:9,runs:7,vmax:58},
+ {id:0,t:'Ohne Aktivität eintragen',s:'Werte später ergänzen',hm:0,km:0,runs:0,vmax:0}
+];
+var selAct=1,rate=4;
+$('fArea').innerHTML=A.map(function(a){return '<option value="'+a.id+'">'+esc(a.n)+(visited[a.id]?' ✓':'')+'</option>';}).join('');
+function renderActs(){
+  $('fActs').innerHTML=ACTS.map(function(a){return '<button type="button" class="act" data-act="'+a.id+'" aria-pressed="'+(a.id===selAct)+'"><span class="tag strava">'+(a.id?'Strava':'–')+'</span><span><b>'+esc(a.t)+'</b><div class="s">'+esc(a.s)+'</div></span><span>'+(a.id===selAct?'✓':'')+'</span></button>';}).join('');
+  $('fRate').innerHTML=[1,2,3,4,5].map(function(i){return '<button type="button" data-r="'+i+'" class="'+(i<=rate?'on':'')+'" aria-label="'+i+' Sterne">★</button>';}).join('');
+}
+$('fActs').addEventListener('click',function(e){var b=e.target.closest('[data-act]');if(b){selAct=+b.dataset.act;renderActs();}});
+$('fRate').addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(b){rate=+b.dataset.r;renderActs();}});
+function openEntry(area){newPh=[];renderUpl();if(area){$('fArea').value=area;}else{$('fArea').value='weissbriach';}renderActs();$('dlgEntry').showModal();}
+$('fab').addEventListener('click',function(){openEntry();});
+$('dlgEntry').addEventListener('close',function(){
+  if(this.returnValue!=='ok'){return;}
+  var act=ACTS.filter(function(a){return a.id===selAct;})[0];
+  var area=$('fArea').value;
+  DIARY.unshift({d:$('fDate').value||'2027-01-23',a:area,hm:act.hm,km:act.km,runs:act.runs,vmax:act.vmax,lifts:0,snow:$('fSnow').value,r:rate,src:act.id?['strava']:[],note:$('fNote').value,travel:$('fTravel').value,ph:newPh});
+  var isNew=!visited[area];visited[area]=true;
+  renderAll();
+  toast(isNew?BY[area].n+' abgehakt ✓':'Skitag gespeichert');
+  show('tagebuch');
+});
+
+function renderAll(){renderSeason();renderList();renderDiary();renderCombos();selectCombo(curCombo);renderPrices();renderCalc();}
+renderAll();
+})();
+</script>
+</body>
+</html>
