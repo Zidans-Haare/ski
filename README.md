@@ -19,6 +19,7 @@ Der Server hat eine einzige Abhängigkeit (`hafas-client` für ÖBB-Verbindungen
 
 - **Karte und Gebiete:** Pisten, Lifte, Pistenplan, Webcams und Kontakt aus kaerntner-skipass.com
 - **Anreise:** Ablauf ab Villach Hbf, nächste Verbindungen live von der ÖBB, Scotty-Link mit Tag und Uhrzeit, Anreise-Seiten der Skigebiete
+- **Aktuell:** offene Lifte, Schneehöhe Berg und Tal, Pisten- und Schneezustand, Lawinenstufe (von bergfex, 30 Minuten zwischengespeichert)
 - **Wetter:** meteoblue-Vorhersage pro Gebiet (alle 3 Stunden und 7 Tage), Link zum vollen Meteogramm
 - **Trips:** Kombis mit Übernachtung und ob sich die Nacht lohnt
 - **Tagebuch:** Skitage mit Fotos, Werte aus Strava (und damit von der Garmin-Uhr)
@@ -41,6 +42,7 @@ Ist `APP_PASSWORD` gesetzt, brauchen alle Routen außer `/api/health`, `/api/log
 | `POST /api/login` | Anmelden mit `APP_PASSWORD` (falls gesetzt), setzt ein Sitzungs-Cookie |
 | `GET/PUT /api/state` | Tagebuch, Trip, Passpreis und eigene Tagespreise |
 | `POST /api/photos`, `GET /api/photos/:id` | Fotos hochladen und laden |
+| `GET /api/report/:gebiet` | Aktueller Schneebericht und Liftstatus (bergfex) |
 | `GET /api/journeys?to=&when=` | Verbindungen ab Villach Hbf (ÖBB) |
 | `GET /api/strava/activities?date=` | Skiaktivitäten eines Tages von Strava |
 | `GET /auth/strava` | Strava verbinden |

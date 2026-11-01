@@ -460,7 +460,7 @@ function nextSaturday(){ const d = new Date(); d.setDate(d.getDate() + ((6 - d.g
 function wxCoords(a){ return a.lat.toFixed(3) + 'N' + a.lon.toFixed(3) + 'E' + (ELEV[a.id] || 1500); }
 
 let areaTab = 'ueberblick';
-const AREA_TABS = [['ueberblick','Überblick'],['anreise','Anreise'],['wetter','Wetter'],['info','Info']];
+const AREA_TABS = [['ueberblick','Überblick'],['aktuell','Aktuell'],['anreise','Anreise'],['wetter','Wetter'],['info','Info']];
 function renderArea(id, tab){
   if (tab) areaTab = tab;
   const a = BY[id];
@@ -475,8 +475,9 @@ function renderArea(id, tab){
 }
 function renderAreaBody(id){
   const a = BY[id], k = KS[id] || {};
-  const body = {ueberblick: areaOverview, anreise: areaTravel, wetter: areaWeather, info: areaInfo}[areaTab](a, k);
+  const body = {ueberblick: areaOverview, aktuell: areaNow, anreise: areaTravel, wetter: areaWeather, info: areaInfo}[areaTab](a, k);
   $('areaBody').innerHTML = body;
+  if (areaTab === 'aktuell') loadNow(a, k);
   if (areaTab === 'anreise') loadLive();
   document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-selected', b.dataset.atab === areaTab));
 }
@@ -518,6 +519,41 @@ function areaTravel(a, k){
   if (combo) h += '<div class="note"><b>Mit Übernachtung kombinieren</b><a href="#/planen" data-combo="' + combo.id + '">' + esc(combo.t) + '</a>, ' + esc(combo.base) + '</div>';
   if (off) h += '<div class="note"><b>Anreise laut Skigebiet</b><a href="' + esc(off[0]) + '" target="_blank" rel="noopener">' + esc(off[1]) + '</a></div>';
   return h + '</section>';
+}
+// Liftstatus-Seiten der Gebiete (von kaerntner-skipass.com)
+const LIFT_STATUS = {
+  katschberg:'https://www.katschi.at/geoeffnete-pisten-liftanlagen.html', koralpe:'https://www.koralpe-kaernten.at/pisten-lifte',
+  lienz:'https://www.lienzer-bergbahnen.at/de/skigebiete-tirol/lifte-pisten/', falkert:'https://www.heidialm.at/home/de/schneebericht'
+};
+function areaNow(a, k){
+  return '<div id="now" style="margin-top:18px"><p class="lead">Lade den aktuellen Schneebericht …</p></div>';
+}
+async function loadNow(a, k){
+  const box = $('now'); if (!box) return;
+  const web = k.contact && k.contact.web ? (k.contact.web.startsWith('http') ? k.contact.web : 'https://' + k.contact.web) : null;
+  const links = (src) => '<div class="btnrow" style="margin-top:16px">' +
+    (k.cam ? '<a class="btn" href="' + esc(k.cam) + '" target="_blank" rel="noopener">' + ICON.cam + 'Webcams</a>' : '') +
+    (LIFT_STATUS[a.id] ? '<a class="btn" href="' + esc(LIFT_STATUS[a.id]) + '" target="_blank" rel="noopener">Liftstatus beim Gebiet</a>' : '') +
+    (k.map ? '<a class="btn" href="' + esc(k.map) + '" target="_blank" rel="noopener">' + ICON.map + 'Pistenplan</a>' : '') +
+    (!src && web ? '<a class="btn" href="' + esc(web) + '" target="_blank" rel="noopener">Website des Gebiets</a>' : '') + '</div>' +
+    (src ? '<p style="font-size:14px;color:var(--ink2);margin-top:12px">Quelle: <a href="' + esc(src) + '" target="_blank" rel="noopener">Schneebericht auf bergfex</a>. Wird alle 30 Minuten aktualisiert.</p>' : '');
+  if (!hosted || !navigator.onLine) { box.innerHTML = '<p class="lead">' + (navigator.onLine ? 'Nur mit Server verfügbar.' : 'Offline. Der Schneebericht lädt, sobald du wieder Netz hast.') + '</p>' + links(null); return; }
+  let r;
+  try { r = await api('/api/report/' + a.id); }
+  catch(err){ box.innerHTML = '<p class="lead">' + esc(err.message) + '.</p>' + links(null); return; }
+  if ($('now') !== box) return;
+  if (!r.source) { box.innerHTML = '<p class="lead">Für ' + esc(a.n) + ' gibt es keinen Schneebericht auf bergfex. Aktuelles findest du direkt beim Gebiet.</p>' + links(null); return; }
+  const open = r.liftsOpen > 0, total = r.liftsTotal || 0;
+  const row = (label, val) => '<div><span>' + esc(label) + '</span><b>' + (val == null ? '–' : esc(val)) + '</b></div>';
+  box.innerHTML =
+    '<div class="nowhead"><span class="nowstate ' + (open ? 'on' : 'off') + '">' + (open ? 'Geöffnet' : 'Geschlossen') + '</span>' +
+      (r.reportedAt ? '<span class="lead" style="margin:0">Stand ' + esc(r.reportedAt) + '</span>' : '') + '</div>' +
+    (total ? '<div class="nowlifts"><b>' + r.liftsOpen + '</b><span>von ' + total + ' Liften offen</span></div>' +
+      '<div class="meter" aria-hidden="true"><div class="fill" style="width:' + (r.liftsOpen / total * 100) + '%"></div></div>' : '') +
+    '<div class="snowpair"><div><span>Berg' + (r.mountain.alt ? ' (' + esc(r.mountain.alt) + ' m)' : '') + '</span><b>' + (r.mountain.cm != null ? r.mountain.cm + ' cm' : '–') + '</b></div>' +
+      '<div><span>Tal' + (r.valley.alt ? ' (' + esc(r.valley.alt) + ' m)' : '') + '</span><b>' + (r.valley.cm != null ? r.valley.cm + ' cm' : '–') + '</b></div></div>' +
+    '<div class="kv">' + row('Betrieb', r.status) + row('Pisten', r.slopes) + row('Schnee', r.snow) + row('Letzter Schneefall', r.lastSnowfall) + row('Lawinenwarnstufe', r.avalanche) + '</div>' +
+    links(r.source);
 }
 function areaWeather(a, k){
   // Das Meteogramm-Widget von meteoblue braucht inzwischen ein Konto. Diese beiden Widgets gehen ohne.

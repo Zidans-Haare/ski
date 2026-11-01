@@ -348,9 +348,9 @@ dialog::backdrop{background:rgba(8,22,31,.55)}
 }
 
 /* Unterbereiche der Gebietsseite */
-.seg{position:sticky;top:calc(var(--safe-t) + 56px);z-index:20;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:18px -16px 0;padding:6px 16px;
+.seg{position:sticky;top:calc(var(--safe-t) + 56px);z-index:20;display:grid;grid-template-columns:repeat(5,auto);justify-content:space-between;gap:2px;margin:18px -16px 0;padding:6px 16px;
   background:color-mix(in srgb,var(--ice) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-.seg button{border:0;background:none;padding:10px 0;font-weight:650;font-size:15px;color:var(--ink2);border-bottom:3px solid transparent;cursor:pointer}
+.seg button{border:0;background:none;padding:10px 2px;font-weight:650;font-size:15px;color:var(--ink2);border-bottom:3px solid transparent;cursor:pointer}
 .seg button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
 .actions button.act{font:inherit;font-size:14px;font-weight:600}
 .scotty{margin-top:4px}
@@ -373,3 +373,24 @@ dialog::backdrop{background:rgba(8,22,31,.55)}
 .btn.danger{background:none;border-color:transparent;color:var(--danger);margin-top:6px;width:100%}
 .upl .ph{position:relative;overflow:visible}
 .phx{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:var(--ink);color:var(--ice);font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
+
+/* Aktuell */
+.nowhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.nowstate{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-weight:700;font-size:14px}
+.nowstate::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.nowstate.on{background:color-mix(in srgb,var(--t1) 16%,var(--paper));color:var(--t1)}
+.nowstate.off{background:var(--paper2);color:var(--ink2)}
+.nowlifts{display:flex;align-items:baseline;gap:10px;margin-top:16px}
+.nowlifts b{font-stretch:62%;font-weight:900;font-size:64px;line-height:.9}
+.nowlifts span{font-size:17px;color:var(--ink2)}
+.snowpair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.snowpair div{background:var(--paper);border:1px solid var(--line2);border-radius:var(--r-m);padding:12px}
+.snowpair span{display:block;font-size:13px;color:var(--ink2)}
+.snowpair b{font-stretch:72%;font-weight:800;font-size:30px}
+
+/* iPhone: Seite füllt immer den ganzen Bildschirm, damit die Tab-Leiste unten bleibt */
+html{height:100%}
+body{min-height:100%;min-height:100dvh}
+.tabbar{bottom:0;transform:translateZ(0)}
+.tabbar::after{content:"";position:absolute;left:0;right:0;top:100%;height:200px;background:inherit;pointer-events:none}
+.kv div:last-child:nth-child(odd){grid-column:1 / -1}

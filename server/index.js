@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {openDb} from './db.js';
 import {journeys} from './oebb.js';
+import {report} from './report.js';
 import * as strava from './strava.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -119,6 +120,12 @@ async function api(req, res, url){
   const p = url.pathname, m = req.method;
 
   if (p === '/api/health') return send(res, 200, {ok: true});
+
+  const rm = /^\/api\/report\/([a-z]+)$/.exec(p);
+  if (rm && m === 'GET') {
+    try { return send(res, 200, await report(rm[1]), {'Cache-Control': 'public, max-age=600'}); }
+    catch (e) { console.error('bergfex', e.message); return send(res, 502, {error: 'Schneebericht gerade nicht erreichbar'}); }
+  }
 
   if (p === '/api/login' && m === 'POST') {
     const ip = req.headers['x-real-ip'] || req.socket.remoteAddress;
