@@ -15,6 +15,7 @@ const ICON = {
   cam:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg>',
   map:'<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>',
   train:'<svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 11h12M9 20l1.5-4M15 20l-1.5-4"/></svg>',
+  link:'<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>',
   pin:'<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
 };
 let toastT;
@@ -212,7 +213,7 @@ function renderAccount(){
 }
 
 /* Strava im Formular */
-$('stravaBtn').onclick = async () => {
+if ($('stravaBtn')) $('stravaBtn').onclick = async () => {
   const box = $('stravaList');
   if (!sync.authed) { box.innerHTML = '<p class="hint">Melde dich zuerst an.</p>'; return; }
   box.innerHTML = '<p class="hint">Lade Aktivitäten …</p>';
@@ -253,10 +254,13 @@ let lastTab = 'saison';
 function route(){
   const h = location.hash.replace(/^#\/?/, '') || 'saison';
   const [view, arg] = h.split('/');
+  dayFilter = null;
+  if (view === 'tag' && /^\d{4}-\d{2}-\d{2}$/.test(arg || '')) { dayFilter = arg; show('tagebuch'); return; }
   if (view === 'neu') { show('tagebuch'); openEntry(); return; }
   if (view === 'gebiet' && BY[arg]) { show('gebiet', arg); return; }
   show(TABS.includes(view) ? view : 'saison');
 }
+let dayFilter = null;
 function show(v, arg){
   document.querySelectorAll('.view').forEach((s) => s.classList.toggle('on', s.id === 'v-' + v));
   if (TABS.includes(v)) lastTab = v;
@@ -270,7 +274,8 @@ function show(v, arg){
   if (v === 'tagebuch') renderDiary();
   if (v === 'rechnung') renderCalc();
   if (v === 'planen') renderPlan();
-  const title = v === 'gebiet' ? '' : document.getElementById('v-' + v).dataset.title;
+  const title = v === 'gebiet' ? '' : (v === 'tagebuch' && dayFilter) ? dstr(dayFilter, {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : document.getElementById('v-' + v).dataset.title;
+  if (v === 'tagebuch' && dayFilter) $('back').hidden = false;
   $('apptitle').textContent = title || '';
   document.title = (v === 'gebiet' ? BY[arg].n : title) + ' · Skisaison';
   window.scrollTo(0, 0);
@@ -637,8 +642,10 @@ function phSvg(g){
     '<rect width="100" height="100" fill="url(#pg' + g + ')"/><polygon points="0,70 24,40 38,55 60,26 82,50 100,38 100,100 0,100" fill="#F4F8FA"/><polygon points="0,82 30,66 55,76 80,62 100,72 100,100 0,100" fill="#DDE7EC"/></svg>';
 }
 function renderDiary(){
-  const list = diary.slice().sort((a, b) => a.d < b.d ? 1 : -1);
-  const hasSample = list.some((e) => e.sample);
+  const list = diary.slice().sort((a, b) => a.d < b.d ? 1 : -1).filter((e) => !dayFilter || e.d === dayFilter);
+  const hasSample = !dayFilter && list.some((e) => e.sample);
+  $('diaryHead').textContent = dayFilter ? dstr(dayFilter, {weekday:'long', day:'numeric', month:'long'}) : 'Meine Skitage';
+  if (dayFilter && !list.length) { $('diary').innerHTML = '<div class="empty"><p>Für diesen Tag gibt es noch keinen Eintrag.</p><button class="btn primary" data-new="' + dayFilter + '">Jetzt eintragen</button><p><a class="textlink" href="#/tagebuch">Alle Skitage</a></p></div>'; return; }
   if (!list.length) { $('diary').innerHTML = '<div class="empty"><p>Noch kein Skitag eingetragen.</p><button class="btn primary" data-new>Ersten Skitag eintragen</button></div>'; return; }
   let h = hasSample ? '<div class="note" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px"><span>Das sind Beispieldaten, damit du siehst, wie es aussieht.</span><button class="btn" id="clearSample">Entfernen</button></div>' : '';
   let lastTrip = null;
@@ -648,18 +655,24 @@ function renderDiary(){
     lastTrip = e.trip || null;
     h += '<article class="entry"><div class="eh"><div class="edate"><b>' + day(e.d).getDate() + '</b><span>' + dstr(e.d, {month:'short'}) + '</span></div>' +
       '<h3><a href="#/gebiet/' + e.a + '">' + esc(a.n) + '</a></h3><span class="eact"><span class="stars" aria-label="' + e.r + ' von 5">' + '★'.repeat(e.r) + '<span class="off">' + '★'.repeat(5 - e.r) + '</span></span><button class="iconbtn small" data-edit="' + e.id + '" aria-label="Skitag bearbeiten oder löschen"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></span></div>' +
-      (e.hm || e.km ? '<div class="estats"><div><b>' + fmt(e.hm || 0) + '</b>Hm</div><div><b>' + (e.km || 0) + '</b>km</div>' + (e.runs ? '<div><b>' + e.runs + '</b>Abfahrten</div>' : '') + (e.vmax ? '<div><b>' + e.vmax + '</b>km/h</div>' : '') + '</div>' : '') +
+      (e.hm || e.km ? '<div class="estats"><div><b>' + fmt(e.hm || 0) + '</b>Hm</div><div><b>' + (e.km || 0).toLocaleString('de-AT') + '</b>km</div>' + (e.runs ? '<div><b>' + e.runs + '</b>Abfahrten</div>' : '') + (e.vmax ? '<div><b>' + e.vmax + '</b>km/h</div>' : '') + '</div>' : '') +
+      (e.prof && e.prof.length > 2 ? profileSvg(e.prof) : '') +
       (e.note ? '<p>' + esc(e.note) + '</p>' : '') +
       (e.ph && e.ph.length ? '<div class="photos">' + e.ph.map((p, i) => '<button class="ph" data-e="' + e.id + '" data-i="' + i + '"' + (p.sid || p.id ? ' data-pid="' + esc(p.sid ? 's:' + p.sid : p.id) + '"' : '') + ' aria-label="' + esc(p.c || 'Foto') + '">' + (p.sid || p.id ? '' : phSvg(p.g)) + '</button>').join('') + '</div>' : '') +
-      '<div class="etags"><span class="tag">' + esc(e.snow) + '</span>' + (e.travel ? '<span class="tag">' + esc(e.travel) + '</span>' : '') + '<span class="tag">Tageskarte ' + eur(price(e.a)) + '</span>' + (e.sample ? '<span class="tag sample">Beispiel</span>' : '') + '</div></article>';
+      '<div class="etags"><span class="tag">' + esc(e.snow) + '</span>' + (e.travel ? '<span class="tag">' + esc(e.travel) + '</span>' : '') + '<span class="tag">Tageskarte ' + eur(price(e.a)) + '</span>' + (e.sample ? '<span class="tag sample">Beispiel</span>' : '') + '</div>' +
+      (e.sample ? '' : '<div class="elink"><button class="btn" data-link="' + e.d + '">' + ICON.link + 'Link für Strava kopieren</button></div>') + '</article>';
   });
+  if (dayFilter) h += '<p><a class="textlink" href="#/tagebuch">Alle Skitage</a></p>';
   $('diary').innerHTML = h;
   $('diary').querySelectorAll('[data-pid]').forEach(async (b) => { const u = await photoUrl(b.dataset.pid); if (u) b.style.backgroundImage = 'url("' + u + '")'; });
   const cs = $('clearSample');
   if (cs) cs.onclick = () => { const old = diary; diary = diary.filter((e) => !e.sample); saveDiary(); renderDiary(); toast('Beispieldaten entfernt', 'Rückgängig', () => { diary = old; saveDiary(); renderDiary(); }); };
 }
 $('diary').addEventListener('click', async (ev) => {
-  if (ev.target.closest('[data-new]')) { openEntry(); return; }
+  const nw = ev.target.closest('[data-new]');
+  if (nw) { openEntry(null, null, nw.dataset.new || null); return; }
+  const lk = ev.target.closest('[data-link]');
+  if (lk) { copyDayLink(lk.dataset.link); return; }
   const ed = ev.target.closest('[data-edit]');
   if (ed) { const en = diary.find((x) => String(x.id) === ed.dataset.edit); if (en) openEntry(null, en); return; }
   const b = ev.target.closest('.ph'); if (!b) return;
@@ -698,15 +711,15 @@ function renderPending(){
 }
 $('fFile').onchange = function(){ Array.from(this.files).forEach((f) => pending.push({file:f, url:URL.createObjectURL(f), c:f.name})); this.value = ''; renderPending(); };
 let editId = null, keepPh = [];
-function openEntry(area, entry){
-  const form = $('entryForm'); form.reset(); pending = []; $('stravaList').innerHTML = '';
+function openEntry(area, entry, date){
+  const form = $('entryForm'); form.reset(); pending = []; gpxData = null; $('gpxInfo').textContent = GPX_HINT;
   editId = entry ? entry.id : null;
   keepPh = entry ? (entry.ph || []).slice() : [];
   renderPending();
   rate = entry ? entry.r : 4; renderRate();
   $('entryTitle').textContent = entry ? 'Skitag bearbeiten' : 'Skitag eintragen';
   $('fDelete').hidden = !entry;
-  $('fDate').value = entry ? entry.d : new Date().toISOString().slice(0, 10);
+  $('fDate').value = entry ? entry.d : date || new Date().toISOString().slice(0, 10);
   $('fArea').value = entry ? entry.a : area || (location.hash.startsWith('#/gebiet/') ? location.hash.split('/')[2] : 'gerlitzen');
   if (entry) {
     $('fHm').value = entry.hm || ''; $('fKm').value = entry.km || ''; $('fRuns').value = entry.runs || ''; $('fV').value = entry.vmax || '';
@@ -737,12 +750,92 @@ $('entry').addEventListener('close', async function(){
   }
   const data = {id, d:$('fDate').value, a:area, hm:+$('fHm').value || 0, km:+$('fKm').value || 0, runs:+$('fRuns').value || 0, vmax:+$('fV').value || 0,
     snow:$('fSnow').value, r:rate, note:$('fNote').value.trim(), travel:$('fTravel').value.trim(), ph};
+  if (gpxData) { data.prof = gpxData.prof; data.src = 'gpx'; } else if (old && old.prof) { data.prof = old.prof; data.src = old.src; }
   if (old) { if (old.trip) data.trip = old.trip; Object.keys(old).forEach((k) => delete old[k]); Object.assign(old, data); }
   else diary.push(data);
   saveDiary();
   toast(old ? 'Skitag gespeichert' : isNew ? BY[area].n + ' abgehakt' : 'Skitag gespeichert');
-  if (location.hash === '#/tagebuch') renderDiary(); else location.hash = '#/tagebuch';
+  const target = location.hash.startsWith('#/tag/') ? '#/tag/' + data.d : '#/tagebuch';
+  if (location.hash === target) renderDiary(); else location.hash = target;
 });
+
+/* ---------- Tages-Link für Strava ---------- */
+async function copyDayLink(d){
+  const url = location.origin + '/#/tag/' + d;
+  try {
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({title: 'Skitag ' + dstr(d), url}); return; }
+    await navigator.clipboard.writeText(url); toast('Link kopiert');
+  } catch(e){ if (e.name !== 'AbortError') window.prompt('Link für Strava:', url); }
+}
+
+/* ---------- GPX auswerten ---------- */
+const GPX_HINT = 'Aus Garmin Connect: Aktivität öffnen, Zahnrad, „Als GPX exportieren“. Die Werte oben füllen sich dann von selbst.';
+let gpxData = null;
+function distM(a, b){
+  const R = 6371000, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLon = (b.lon - a.lon) * r;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function parseGpx(text){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Die Datei ist keine gültige GPX-Datei.');
+  const pts = [...doc.getElementsByTagName('trkpt')].map((p) => ({
+    lat: +p.getAttribute('lat'), lon: +p.getAttribute('lon'),
+    ele: +(p.getElementsByTagName('ele')[0] || {}).textContent,
+    t: Date.parse((p.getElementsByTagName('time')[0] || {}).textContent)
+  })).filter((p) => isFinite(p.lat) && isFinite(p.lon) && isFinite(p.ele));
+  if (pts.length < 10) throw new Error('In der Datei sind zu wenige Trackpunkte.');
+  // Höhe glätten, damit GPS-Rauschen keine Höhenmeter erzeugt
+  const ele = pts.map((_, i) => { let s = 0, n = 0; for (let j = Math.max(0, i - 3); j <= Math.min(pts.length - 1, i + 3); j++) { s += pts[j].ele; n++; } return s / n; });
+  // Abfahrten erkennen: runter mind. 50 m, dann wieder rauf mind. 30 m (Lift)
+  let state = 'up', top = ele[0], low = ele[0], runs = 0, descent = 0, downKm = 0, ref = ele[0];
+  for (let i = 1; i < pts.length; i++) {
+    const e = ele[i], d = distM(pts[i - 1], pts[i]);
+    if (e < ref - 2) { descent += ref - e; ref = e; } else if (e > ref + 2) ref = e;
+    if (state === 'up') { if (e > top) top = e; if (e < top - 50) { state = 'down'; runs++; low = e; } }
+    else { if (e < low) low = e; if (e > low + 30) { state = 'up'; top = e; } }
+    if (ele[i] < ele[i - 1] && state === 'down') downKm += d;
+  }
+  // Höchstgeschwindigkeit über mind. 4 Sekunden, Ausreißer über 140 km/h verworfen
+  let vmax = 0;
+  if (pts.every((p) => isFinite(p.t))) {
+    for (let i = 0, j = 0, acc = 0; i < pts.length; i++) {
+      if (j < i) { j = i; acc = 0; }
+      while (j < pts.length - 1 && pts[j].t - pts[i].t < 4000) { acc += distM(pts[j], pts[j + 1]); j++; }
+      const dt = (pts[j].t - pts[i].t) / 1000;
+      if (dt >= 4) { const v = acc / dt * 3.6; if (v > vmax && v < 140) vmax = v; }
+      if (j > i) acc -= distM(pts[i], pts[i + 1]);
+    }
+  }
+  // Höhenprofil mit 120 Punkten
+  const prof = [];
+  for (let k = 0; k < 120; k++) prof.push(Math.round(ele[Math.floor(k * (ele.length - 1) / 119)]));
+  const mid = pts.reduce((s, p) => ({lat: s.lat + p.lat / pts.length, lon: s.lon + p.lon / pts.length}), {lat: 0, lon: 0});
+  let near = null, nd = Infinity;
+  AREAS.forEach((a) => { const d = distM(mid, a); if (d < nd) { nd = d; near = a; } });
+  const t0 = isFinite(pts[0].t) ? new Date(pts[0].t) : null;
+  const date = t0 ? new Date(t0.getTime() - t0.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : null;
+  return {date, area: nd < 20000 ? near.id : null, hm: Math.round(descent), km: Math.round(downKm / 100) / 10, runs, vmax: Math.round(vmax), prof};
+}
+$('fGpx').onchange = async function(){
+  const f = this.files[0]; this.value = ''; if (!f) return;
+  try {
+    const g = parseGpx(await f.text());
+    gpxData = g;
+    if (g.date) $('fDate').value = g.date;
+    if (g.area) $('fArea').value = g.area;
+    $('fHm').value = g.hm; $('fKm').value = g.km; $('fRuns').value = g.runs; if (g.vmax) $('fV').value = g.vmax;
+    $('gpxInfo').textContent = 'Geladen: ' + fmt(g.hm) + ' Hm bergab, ' + g.km + ' km auf der Piste, ' + g.runs + ' Abfahrten' + (g.area ? ', erkannt: ' + BY[g.area].n : '') + '.';
+  } catch(e){ gpxData = null; $('gpxInfo').textContent = e.message; }
+};
+function profileSvg(p){
+  const min = Math.min(...p), max = Math.max(...p), h = Math.max(max - min, 1), n = p.length - 1;
+  const pts = p.map((v, i) => (i / n * 100).toFixed(2) + ',' + (40 - (v - min) / h * 36).toFixed(2));
+  return '<svg class="prof" viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Höhenprofil ' + fmt(min) + ' bis ' + fmt(max) + ' m">' +
+    '<path class="a" d="M0,40 L' + pts.join(' L') + ' L100,40 Z"/><path class="l" d="M' + pts.join(' L') + '"/></svg>' +
+    '<div class="prof-lab"><span>' + fmt(min) + ' m</span><span>' + fmt(max) + ' m</span></div>';
+}
+
 
 /* ---------- Rechnung ---------- */
 function renderCalc(){

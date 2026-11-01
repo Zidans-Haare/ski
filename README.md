@@ -22,7 +22,8 @@ Der Server hat eine einzige Abhängigkeit (`hafas-client` für ÖBB-Verbindungen
 - **Aktuell:** offene Lifte, Schneehöhe Berg und Tal, Pisten- und Schneezustand, Lawinenstufe (von bergfex, 30 Minuten zwischengespeichert)
 - **Wetter:** meteoblue-Vorhersage pro Gebiet (alle 3 Stunden und 7 Tage), Link zum vollen Meteogramm
 - **Trips:** Kombis mit Übernachtung und ob sich die Nacht lohnt
-- **Tagebuch:** Skitage mit Fotos, Werte aus Strava (und damit von der Garmin-Uhr)
+- **Tagebuch:** Skitage mit Fotos; GPX aus Garmin Connect laden (Höhenmeter bergab, Pisten-km, Abfahrten, Höchstgeschwindigkeit, Höhenprofil)
+- **Tages-Link:** `https://ski.olomek.com/#/tag/2027-01-16` zeigt genau diesen Skitag, z. B. als Link in der Strava-Beschreibung
 - **Rechnung:** Tagespreise je Gebiet gegen den Passpreis
 
 ## Lokal starten
@@ -70,6 +71,8 @@ userdel -r ski
 ```
 
 ## Strava einrichten
+
+Hinweis: Strava gibt API-Daten inzwischen nur noch mit Strava-Abo heraus. Ohne Abo meldet die App „Strava-API-App inaktiv“.
 
 1. Auf https://www.strava.com/settings/api eine App anlegen, „Authorization Callback Domain“: `ski.olomek.com`
 2. `STRAVA_CLIENT_ID` und `STRAVA_CLIENT_SECRET` in `/home/ski/app/.env` eintragen

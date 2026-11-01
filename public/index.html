@@ -85,7 +85,7 @@
 
 <!-- TAGEBUCH -->
 <section class="view" id="v-tagebuch" data-title="Tagebuch">
-  <h1 class="pageh">Meine Skitage</h1>
+  <h1 class="pageh" id="diaryHead">Meine Skitage</h1>
   <div id="diary"></div>
 </section>
 
@@ -131,11 +131,11 @@
     </div>
     <div class="fgrid four">
       <label class="f">Höhenmeter<input type="number" id="fHm" inputmode="numeric" min="0" placeholder="0"></label>
-      <label class="f">Kilometer<input type="number" id="fKm" inputmode="decimal" min="0" placeholder="0"></label>
+      <label class="f">Kilometer<input type="number" id="fKm" inputmode="decimal" min="0" step="0.1" placeholder="0"></label>
       <label class="f">Abfahrten<input type="number" id="fRuns" inputmode="numeric" min="0" placeholder="0"></label>
       <label class="f">km/h max<input type="number" id="fV" inputmode="numeric" min="0" placeholder="0"></label>
     </div>
-    <div><button class="btn" type="button" id="stravaBtn">Aus Strava übernehmen</button><div id="stravaList" class="stravalist"></div></div>
+    <div class="gpx"><label class="btn" for="fGpx">GPX-Datei laden</label><input type="file" id="fGpx" accept=".gpx,application/gpx+xml,application/xml,text/xml"><p class="hint" id="gpxInfo">Aus Garmin Connect: Aktivität öffnen, Zahnrad, „Als GPX exportieren“. Die Werte oben füllen sich dann von selbst.</p></div>
     <div class="fgrid">
       <label class="f">Schnee<select id="fSnow"><option>Pulver</option><option>Griffig</option><option>Kunstschnee, hart</option><option>Sulz</option><option>Eisig</option></select></label>
       <div class="f">Wie war's?<div class="rate" id="fRate"></div></div>
@@ -163,7 +163,9 @@
       <li><span class="dotc ok"></span><div><b>meteoblue</b><p>Meteogramm für jedes Gebiet, live eingebunden.</p></div></li>
       <li><span class="dotc ok"></span><div><b>ÖBB Scotty</b><p>Verbindungssuche ab Villach, vorausgefüllt mit dem Ausstiegsbahnhof.</p></div></li>
       <li><span class="dotc ok"></span><div><b>ÖBB live</b><p>Nächste Verbindungen ab Villach in „Anreise“. Inoffizielle Schnittstelle der ÖBB-App, kann ausfallen.</p></div></li>
-      <li><span class="dotc ok"></span><div><b>Strava</b><p>Skiaktivitäten von Strava und deiner Garmin-Uhr beim Eintragen übernehmen.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>Garmin (GPX)</b><p>GPX aus Garmin Connect beim Eintragen laden: Höhenmeter, Pisten-km, Abfahrten, Höchstgeschwindigkeit und Höhenprofil.</p></div></li>
+      <li><span class="dotc ok"></span><div><b>Link für Strava</b><p>ski.olomek.com/#/tag/JJJJ-MM-TT in die Strava-Beschreibung, dann öffnet sich genau dieser Skitag.</p></div></li>
+      <li><span class="dotc warn"></span><div><b>Strava-API</b><p>Strava gibt Daten nur noch mit Abo heraus. Die Anbindung ist eingebaut und springt an, sobald es ein Abo gibt.</p></div></li>
       <li><span class="dotc warn"></span><div><b>Skiline</b><p>Liftfahrten zur Skipassnummer. Keine offizielle API, nur ein Versuch über deinen eigenen Login.</p></div></li>
     </ul>
   </form>
