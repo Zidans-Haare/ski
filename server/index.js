@@ -95,7 +95,8 @@ function serveStatic(req, res, urlPath){
   fs.stat(file, (err, st) => {
     const target = err || !st.isFile() ? path.join(PUBLIC, 'index.html') : file;
     const ext = path.extname(target);
-    const noCache = ['.html', '.webmanifest'].includes(ext) || target.endsWith('sw.js');
+    // App-Dateien immer neu prüfen lassen (ETag), offline übernimmt der Service Worker
+    const noCache = ['.html', '.webmanifest', '.js', '.css'].includes(ext);
     res.writeHead(200, {
       'Content-Type': TYPES[ext] || 'application/octet-stream',
       'Cache-Control': noCache ? 'no-cache' : 'public, max-age=3600',

@@ -1,5 +1,5 @@
 /* Service Worker: App-Hülle offline, Schriften im Cache, Wetter und Webcams immer live. */
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const FILES = [
@@ -8,7 +8,8 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES)));
+  // cache: 'reload' umgeht den HTTP-Cache, damit wirklich die neue Version gespeichert wird
+  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES.map((f) => new Request(f, {cache: 'reload'})))));
 });
 
 self.addEventListener('activate', (e) => {
@@ -53,7 +54,7 @@ self.addEventListener('fetch', (e) => {
 async function staleWhileRevalidate(req, cacheName) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(req);
-  const net = fetch(req).then((res) => {
+  const net = fetch(req, {cache: 'no-cache'}).then((res) => {
     if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
     return res;
   }).catch(() => hit);
