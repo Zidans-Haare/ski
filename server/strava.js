@@ -10,10 +10,10 @@ export function status(){
 }
 export function disconnect(){ db.delKv('strava'); }
 
-export function authorizeUrl(){
+export function authorizeUrl(state){
   const q = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID, response_type: 'code', approval_prompt: 'auto',
-    redirect_uri: cfg.publicUrl + '/auth/strava/callback', scope: 'activity:read_all'
+    redirect_uri: cfg.publicUrl + '/auth/strava/callback', scope: 'activity:read_all', state
   });
   return 'https://www.strava.com/oauth/authorize?' + q;
 }

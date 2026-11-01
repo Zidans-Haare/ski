@@ -49,8 +49,9 @@ function authed(req){
 }
 const cookie = (val, maxAge) => `sid=${val}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}` + (secure ? '; Secure' : '');
 const pwHash = crypto.createHash('sha256').update(cfg.password).digest();
-// Einfache Bremse gegen Passwort-Raten
+// Bremse gegen Passwort-Raten: pro IP (von nginx gesetzt) und global, weil Header fälschbar sind
 const fails = new Map();
+const globalFails = [];
 
 /* ---------- Helfer ---------- */
 function send(res, status, body, headers = {}){
@@ -111,12 +112,13 @@ async function api(req, res, url){
   if (p === '/api/health') return send(res, 200, {ok: true});
 
   if (p === '/api/login' && m === 'POST') {
-    const ip = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || req.socket.remoteAddress;
+    const ip = req.headers['x-real-ip'] || req.socket.remoteAddress;
     const f = fails.get(ip) || {n: 0, t: 0};
-    if (f.n >= 5 && Date.now() - f.t < 15 * 60e3) return send(res, 429, {error: 'Zu viele Versuche. Warte 15 Minuten.'});
+    while (globalFails.length && Date.now() - globalFails[0] > 15 * 60e3) globalFails.shift();
+    if ((f.n >= 5 && Date.now() - f.t < 15 * 60e3) || globalFails.length >= 20) return send(res, 429, {error: 'Zu viele Versuche. Warte 15 Minuten.'});
     const {password} = await readJson(req, 1e4);
     const ok = typeof password === 'string' && crypto.timingSafeEqual(crypto.createHash('sha256').update(password).digest(), pwHash);
-    if (!ok) { fails.set(ip, {n: f.n + 1, t: Date.now()}); return send(res, 401, {error: 'Falsches Passwort'}); }
+    if (!ok) { fails.set(ip, {n: f.n + 1, t: Date.now()}); globalFails.push(Date.now()); if (fails.size > 1000) fails.clear(); return send(res, 401, {error: 'Falsches Passwort'}); }
     fails.delete(ip);
     return send(res, 200, {ok: true}, {'Set-Cookie': cookie(makeSession(), 60 * 60 * 24 * 180)});
   }
@@ -169,10 +171,18 @@ async function auth(req, res, url){
   if (!authed(req)) { res.writeHead(302, {Location: '/#/saison'}); return res.end(); }
   if (url.pathname === '/auth/strava') {
     if (!strava.configured()) return send(res, 503, {error: 'Strava ist auf dem Server noch nicht eingerichtet'});
-    res.writeHead(302, {Location: strava.authorizeUrl()}); return res.end();
+    const state = crypto.randomBytes(16).toString('base64url');
+    res.writeHead(302, {Location: strava.authorizeUrl(state), 'Set-Cookie': `stv=${state}.${sign(state)}; Path=/auth/strava; HttpOnly; SameSite=Lax; Max-Age=600` + (secure ? '; Secure' : '')});
+    return res.end();
   }
   if (url.pathname === '/auth/strava/callback') {
+    const m = /(?:^|;\s*)stv=([^;.]+)\.([^;]+)/.exec(req.headers.cookie || '');
+    const st = url.searchParams.get('state') || '';
+    const valid = m && m[1].length === st.length && crypto.timingSafeEqual(Buffer.from(m[1]), Buffer.from(st)) && sign(m[1]) === m[2];
+    const clear = `stv=; Path=/auth/strava; HttpOnly; SameSite=Lax; Max-Age=0` + (secure ? '; Secure' : '');
+    if (!valid) { res.writeHead(302, {Location: '/#/saison?strava=fehler', 'Set-Cookie': clear}); return res.end(); }
     const ok = await strava.callback(url.searchParams).catch((e) => { console.error('Strava', e.message); return false; });
+    res.setHeader('Set-Cookie', clear);
     res.writeHead(302, {Location: '/#/saison?strava=' + (ok ? 'ok' : 'fehler')}); return res.end();
   }
   send(res, 404, {error: 'Unbekannt'});
