@@ -51,7 +51,15 @@ export async function activities(date){
   const end = date ? new Date(start.getTime() + 864e5) : new Date();
   const q = new URLSearchParams({after: Math.floor(start / 1000), before: Math.floor(end / 1000), per_page: '50'});
   const r = await fetch('https://www.strava.com/api/v3/athlete/activities?' + q, {headers: {Authorization: 'Bearer ' + tok}});
-  if (!r.ok) throw Object.assign(new Error('Strava antwortet mit ' + r.status), {status: 502});
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}));
+    const inactive = (body.errors || []).some((e) => e.resource === 'Application' && e.code === 'Inactive');
+    const msg = inactive ? 'Deine Strava-API-App ist bei Strava inaktiv. Prüfe sie auf strava.com/settings/api.'
+      : r.status === 401 ? 'Strava-Zugang abgelaufen. Verbinde Strava unter ⓘ neu.'
+      : r.status === 403 ? 'Strava verweigert den Zugriff. Verbinde Strava neu und erlaube das Lesen deiner Aktivitäten.'
+      : 'Strava antwortet mit ' + r.status;
+    throw Object.assign(new Error(msg), {status: 502});
+  }
   const list = await r.json();
   return list.filter((a) => SKI.has(a.sport_type || a.type)).map((a) => ({
     id: a.id, name: a.name, start: a.start_date_local, type: a.sport_type || a.type,
