@@ -546,7 +546,7 @@ async function loadNow(a, k){
   const open = r.liftsOpen > 0, total = r.liftsTotal || 0;
   const row = (label, val) => '<div><span>' + esc(label) + '</span><b>' + (val == null ? '–' : esc(val)) + '</b></div>';
   box.innerHTML =
-    '<div class="nowhead"><span class="nowstate ' + (open ? 'on' : 'off') + '">' + (open ? 'Geöffnet' : 'Geschlossen') + '</span>' +
+    '<div class="nowhead"><span class="nowstate ' + (open ? 'on' : 'off') + '">' + (r.liftsOpen == null ? 'Keine Liftmeldung' : open ? 'Geöffnet' : 'Geschlossen') + '</span>' +
       (r.reportedAt ? '<span class="lead" style="margin:0">Stand ' + esc(r.reportedAt) + '</span>' : '') + '</div>' +
     (total ? '<div class="nowlifts"><b>' + r.liftsOpen + '</b><span>von ' + total + ' Liften offen</span></div>' +
       '<div class="meter" aria-hidden="true"><div class="fill" style="width:' + (r.liftsOpen / total * 100) + '%"></div></div>' : '') +
