@@ -1,9 +1,10 @@
 /* Service Worker: App-Hülle offline, Schriften im Cache, Wetter und Webcams immer live. */
-const VERSION = 'v6';
+// __V__ ersetzt der Server durch einen Hash der App-Dateien
+const VERSION = '__V__';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const FILES = [
-  './', './index.html', './app.css', './app.js', './data.js', './manifest.webmanifest',
+  './', './index.html', './app.css?v=__V__', './app.js?v=__V__', './data.js?v=__V__', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'
 ];
 

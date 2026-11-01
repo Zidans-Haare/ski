@@ -29,6 +29,8 @@ if (cfg.secret.length < 32) {
 if (open) console.log('Hinweis: kein APP_PASSWORD gesetzt, die App ist ohne Anmeldung erreichbar.');
 const secure = cfg.publicUrl.startsWith('https://');
 const PUBLIC = path.join(ROOT, 'public');
+// Versionskennung aus dem Inhalt der App-Dateien. Neue Version = neue Datei-URLs, so kann kein Cache (auch nicht Cloudflare) Altes liefern.
+const V = crypto.createHash('sha256').update(['index.html', 'app.js', 'app.css', 'data.js', 'sw.js'].map((f) => fs.readFileSync(path.join(PUBLIC, f))).join('')).digest('hex').slice(0, 10);
 const PHOTOS = path.join(cfg.dataDir, 'photos');
 fs.mkdirSync(PHOTOS, {recursive: true});
 const db = openDb(path.join(cfg.dataDir, 'ski.db'));
@@ -96,16 +98,18 @@ function serveStatic(req, res, urlPath){
     const target = err || !st.isFile() ? path.join(PUBLIC, 'index.html') : file;
     const ext = path.extname(target);
     // App-Dateien immer neu prüfen lassen (ETag), offline übernimmt der Service Worker
-    const noCache = ['.html', '.webmanifest', '.js', '.css'].includes(ext);
+    const versioned = /[?&]v=/.test(req.url);
+    const noCache = !versioned && ['.html', '.webmanifest', '.js', '.css'].includes(ext);
     res.writeHead(200, {
       'Content-Type': TYPES[ext] || 'application/octet-stream',
-      'Cache-Control': noCache ? 'no-cache' : 'public, max-age=3600',
+      'Cache-Control': noCache ? 'no-cache' : versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=3600',
       'Content-Security-Policy': CSP,
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
     });
     if (req.method === 'HEAD') return res.end();
+    if (ext === '.html' || target.endsWith('sw.js')) return fs.readFile(target, 'utf8', (e, txt) => res.end(e ? '' : txt.replaceAll('__V__', V)));
     fs.createReadStream(target).pipe(res);
   });
 }
