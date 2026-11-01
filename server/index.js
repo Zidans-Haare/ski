@@ -116,10 +116,15 @@ async function api(req, res, url){
     const f = fails.get(ip) || {n: 0, t: 0};
     while (globalFails.length && Date.now() - globalFails[0] > 15 * 60e3) globalFails.shift();
     if ((f.n >= 5 && Date.now() - f.t < 15 * 60e3) || globalFails.length >= 20) return send(res, 429, {error: 'Zu viele Versuche. Warte 15 Minuten.'});
+    // Versuch sofort zählen (vor jedem await), damit parallele Anfragen die Bremse nicht umgehen
+    const stamp = Date.now();
+    fails.set(ip, {n: f.n + 1, t: stamp}); globalFails.push(stamp);
+    if (fails.size > 1000) fails.clear();
     const {password} = await readJson(req, 1e4);
     const ok = typeof password === 'string' && crypto.timingSafeEqual(crypto.createHash('sha256').update(password).digest(), pwHash);
-    if (!ok) { fails.set(ip, {n: f.n + 1, t: Date.now()}); globalFails.push(Date.now()); if (fails.size > 1000) fails.clear(); return send(res, 401, {error: 'Falsches Passwort'}); }
+    if (!ok) { await new Promise((r) => setTimeout(r, 400)); return send(res, 401, {error: 'Falsches Passwort'}); }
     fails.delete(ip);
+    const gi = globalFails.indexOf(stamp); if (gi >= 0) globalFails.splice(gi, 1);
     return send(res, 200, {ok: true}, {'Set-Cookie': cookie(makeSession(), 60 * 60 * 24 * 180)});
   }
   if (p === '/api/logout' && m === 'POST') return send(res, 200, {ok: true}, {'Set-Cookie': cookie('', 0)});
