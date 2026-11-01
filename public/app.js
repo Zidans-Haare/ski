@@ -731,8 +731,10 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) ask(w); });
     });
   }).catch(() => {});
+  // Nur bei einem Update neu laden, nicht beim ersten Installieren
+  const hadController = !!navigator.serviceWorker.controller;
   let reloaded = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload(); } });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
 }
 
 $('infoBtn').onclick = () => { renderAccount(); $('info').showModal(); };

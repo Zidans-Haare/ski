@@ -1,5 +1,5 @@
 /* Service Worker: App-Hülle offline, Schriften im Cache, Wetter und Webcams immer live. */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 const FILES = [
