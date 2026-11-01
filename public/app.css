@@ -315,7 +315,7 @@ dialog.sheet[open]{animation:up .22s ease-out}
 dialog::backdrop{background:rgba(8,22,31,.55)}
 .sheet form{padding:16px 16px calc(var(--safe-b) + 16px);display:flex;flex-direction:column;gap:14px}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.sheet-foot{position:sticky;bottom:0;padding-top:4px}
+.sheet-foot{position:sticky;bottom:calc(-1 * (var(--safe-b) + 16px));margin:0 -16px calc(-1 * (var(--safe-b) + 16px));padding:10px 16px calc(var(--safe-b) + 16px);background:var(--ice);border-top:1px solid var(--line2)}
 .sheet-foot .btn{width:100%}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fgrid.four{grid-template-columns:repeat(4,1fr)}
@@ -365,3 +365,11 @@ dialog::backdrop{background:rgba(8,22,31,.55)}
 .jt b{font-stretch:75%;font-weight:800;font-size:22px;line-height:1}
 .late{color:var(--danger);font-weight:700;font-size:13px}
 #account{margin-bottom:6px}
+
+/* Bearbeiten und Löschen */
+.eact{display:flex;align-items:center;gap:8px}
+.iconbtn.small{width:34px;height:34px}
+.iconbtn.small svg{width:17px;height:17px}
+.btn.danger{background:none;border-color:transparent;color:var(--danger);margin-top:6px;width:100%}
+.upl .ph{position:relative;overflow:visible}
+.phx{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:var(--ink);color:var(--ice);font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}

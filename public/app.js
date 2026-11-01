@@ -611,7 +611,7 @@ function renderDiary(){
     if (e.trip && e.trip !== lastTrip) h += '<div class="tripband">' + esc(e.trip) + '</div>';
     lastTrip = e.trip || null;
     h += '<article class="entry"><div class="eh"><div class="edate"><b>' + day(e.d).getDate() + '</b><span>' + dstr(e.d, {month:'short'}) + '</span></div>' +
-      '<h3><a href="#/gebiet/' + e.a + '">' + esc(a.n) + '</a></h3><span class="stars" aria-label="' + e.r + ' von 5">' + '★'.repeat(e.r) + '<span class="off">' + '★'.repeat(5 - e.r) + '</span></span></div>' +
+      '<h3><a href="#/gebiet/' + e.a + '">' + esc(a.n) + '</a></h3><span class="eact"><span class="stars" aria-label="' + e.r + ' von 5">' + '★'.repeat(e.r) + '<span class="off">' + '★'.repeat(5 - e.r) + '</span></span><button class="iconbtn small" data-edit="' + e.id + '" aria-label="Skitag bearbeiten oder löschen"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></span></div>' +
       (e.hm || e.km ? '<div class="estats"><div><b>' + fmt(e.hm || 0) + '</b>Hm</div><div><b>' + (e.km || 0) + '</b>km</div>' + (e.runs ? '<div><b>' + e.runs + '</b>Abfahrten</div>' : '') + (e.vmax ? '<div><b>' + e.vmax + '</b>km/h</div>' : '') + '</div>' : '') +
       (e.note ? '<p>' + esc(e.note) + '</p>' : '') +
       (e.ph && e.ph.length ? '<div class="photos">' + e.ph.map((p, i) => '<button class="ph" data-e="' + e.id + '" data-i="' + i + '"' + (p.sid || p.id ? ' data-pid="' + esc(p.sid ? 's:' + p.sid : p.id) + '"' : '') + ' aria-label="' + esc(p.c || 'Foto') + '">' + (p.sid || p.id ? '' : phSvg(p.g)) + '</button>').join('') + '</div>' : '') +
@@ -624,6 +624,8 @@ function renderDiary(){
 }
 $('diary').addEventListener('click', async (ev) => {
   if (ev.target.closest('[data-new]')) { openEntry(); return; }
+  const ed = ev.target.closest('[data-edit]');
+  if (ed) { const en = diary.find((x) => String(x.id) === ed.dataset.edit); if (en) openEntry(null, en); return; }
   const b = ev.target.closest('.ph'); if (!b) return;
   const e = diary.find((x) => String(x.id) === b.dataset.e), p = e.ph[+b.dataset.i];
   const img = $('lbImg');
@@ -642,33 +644,67 @@ function renderRate(){ $('fRate').innerHTML = [1,2,3,4,5].map((i) => '<button ty
 $('fRate').onclick = (e) => { const b = e.target.closest('[data-r]'); if (b) { rate = +b.dataset.r; renderRate(); } };
 function renderPending(){
   const box = $('fPhotos'); box.querySelectorAll('.ph').forEach((n) => n.remove());
-  pending.forEach((p) => { const d = document.createElement('div'); d.className = 'ph'; d.style.backgroundImage = 'url("' + p.url + '")'; box.appendChild(d); });
+  // Schon gespeicherte Fotos (beim Bearbeiten) mit Entfernen-Knopf
+  keepPh.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'ph';
+    if (p.sid || p.id) photoUrl(p.sid ? 's:' + p.sid : p.id).then((u) => { if (u) d.style.backgroundImage = 'url("' + u + '")'; });
+    else d.innerHTML = phSvg(p.g);
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'phx'; x.setAttribute('aria-label', 'Foto entfernen'); x.textContent = '×';
+    x.onclick = () => { keepPh.splice(i, 1); renderPending(); };
+    d.appendChild(x); box.appendChild(d);
+  });
+  pending.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'ph'; d.style.backgroundImage = 'url("' + p.url + '")';
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'phx'; x.setAttribute('aria-label', 'Foto entfernen'); x.textContent = '×';
+    x.onclick = () => { pending.splice(i, 1); renderPending(); };
+    d.appendChild(x); box.appendChild(d);
+  });
 }
 $('fFile').onchange = function(){ Array.from(this.files).forEach((f) => pending.push({file:f, url:URL.createObjectURL(f), c:f.name})); this.value = ''; renderPending(); };
-function openEntry(area){
-  const form = $('entryForm'); form.reset(); pending = []; renderPending(); rate = 4; renderRate(); $('stravaList').innerHTML = '';
-  $('fDate').value = new Date().toISOString().slice(0, 10);
-  $('fArea').value = area || (location.hash.startsWith('#/gebiet/') ? location.hash.split('/')[2] : 'gerlitzen');
+let editId = null, keepPh = [];
+function openEntry(area, entry){
+  const form = $('entryForm'); form.reset(); pending = []; $('stravaList').innerHTML = '';
+  editId = entry ? entry.id : null;
+  keepPh = entry ? (entry.ph || []).slice() : [];
+  renderPending();
+  rate = entry ? entry.r : 4; renderRate();
+  $('entryTitle').textContent = entry ? 'Skitag bearbeiten' : 'Skitag eintragen';
+  $('fDelete').hidden = !entry;
+  $('fDate').value = entry ? entry.d : new Date().toISOString().slice(0, 10);
+  $('fArea').value = entry ? entry.a : area || (location.hash.startsWith('#/gebiet/') ? location.hash.split('/')[2] : 'gerlitzen');
+  if (entry) {
+    $('fHm').value = entry.hm || ''; $('fKm').value = entry.km || ''; $('fRuns').value = entry.runs || ''; $('fV').value = entry.vmax || '';
+    $('fSnow').value = entry.snow || 'Pulver'; $('fNote').value = entry.note || ''; $('fTravel').value = entry.travel || '';
+  }
   $('entry').showModal();
 }
 $('fab').onclick = () => openEntry();
+function deleteEntry(id){
+  const i = diary.findIndex((e) => e.id === id); if (i < 0) return;
+  const [gone] = diary.splice(i, 1); saveDiary(); renderDiary();
+  toast('Skitag gelöscht', 'Rückgängig', () => { diary.splice(i, 0, gone); saveDiary(); renderDiary(); });
+}
 $('entry').addEventListener('close', async function(){
   if (location.hash === '#/neu') history.replaceState(null, '', '#/tagebuch');
+  if (this.returnValue === 'delete' && editId != null) { deleteEntry(editId); return; }
   if (this.returnValue !== 'ok') return;
-  const id = Date.now(), area = $('fArea').value, isNew = !visits(area).length;
-  const ph = [];
+  const old = editId != null ? diary.find((e) => e.id === editId) : null;
+  const id = old ? old.id : Date.now(), area = $('fArea').value, isNew = !visits(area).some((e) => e.id !== id);
+  const ph = keepPh.slice();
   for (let i = 0; i < pending.length; i++) {
-    const pid = id + '-' + i;
+    const pid = Date.now() + '-' + i;
     try {
       const blob = await shrink(pending[i].file);
       const sid = await sync.uploadPhoto(blob);
       if (sid) ph.push({sid, c:''}); else { await photoDB.put(pid, blob); ph.push({id:pid, c:'', pending:true}); }
     } catch(e){ toast('Ein Foto konnte nicht gespeichert werden.'); }
   }
-  diary.push({id, d:$('fDate').value, a:area, hm:+$('fHm').value || 0, km:+$('fKm').value || 0, runs:+$('fRuns').value || 0, vmax:+$('fV').value || 0,
-    snow:$('fSnow').value, r:rate, note:$('fNote').value.trim(), travel:$('fTravel').value.trim(), ph});
+  const data = {id, d:$('fDate').value, a:area, hm:+$('fHm').value || 0, km:+$('fKm').value || 0, runs:+$('fRuns').value || 0, vmax:+$('fV').value || 0,
+    snow:$('fSnow').value, r:rate, note:$('fNote').value.trim(), travel:$('fTravel').value.trim(), ph};
+  if (old) { if (old.trip) data.trip = old.trip; Object.keys(old).forEach((k) => delete old[k]); Object.assign(old, data); }
+  else diary.push(data);
   saveDiary();
-  toast(isNew ? BY[area].n + ' abgehakt' : 'Skitag gespeichert');
+  toast(old ? 'Skitag gespeichert' : isNew ? BY[area].n + ' abgehakt' : 'Skitag gespeichert');
   if (location.hash === '#/tagebuch') renderDiary(); else location.hash = '#/tagebuch';
 });
 
