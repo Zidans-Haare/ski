@@ -20,10 +20,13 @@ const cfg = {
   secret: process.env.SESSION_SECRET || '',
   publicUrl: (process.env.PUBLIC_URL || 'http://localhost:3100').replace(/\/$/, ''),
 };
-if (!cfg.password || cfg.secret.length < 32) {
-  console.error('APP_PASSWORD und SESSION_SECRET (mind. 32 Zeichen) müssen gesetzt sein. Siehe .env.example');
+// Ohne APP_PASSWORD läuft die App offen (ohne Anmeldung)
+const open = !cfg.password;
+if (cfg.secret.length < 32) {
+  console.error('SESSION_SECRET (mind. 32 Zeichen) muss gesetzt sein. Siehe .env.example');
   process.exit(1);
 }
+if (open) console.log('Hinweis: kein APP_PASSWORD gesetzt, die App ist ohne Anmeldung erreichbar.');
 const secure = cfg.publicUrl.startsWith('https://');
 const PUBLIC = path.join(ROOT, 'public');
 const PHOTOS = path.join(cfg.dataDir, 'photos');
@@ -39,6 +42,7 @@ function makeSession(){
   return v + '.' + sign(v);
 }
 function authed(req){
+  if (open) return true;
   const m = /(?:^|;\s*)sid=([^;]+)/.exec(req.headers.cookie || '');
   if (!m) return false;
   const [v, s] = m[1].split('.');
@@ -121,7 +125,7 @@ async function api(req, res, url){
     fails.set(ip, {n: f.n + 1, t: stamp}); globalFails.push(stamp);
     if (fails.size > 1000) fails.clear();
     const {password} = await readJson(req, 1e4);
-    const ok = typeof password === 'string' && crypto.timingSafeEqual(crypto.createHash('sha256').update(password).digest(), pwHash);
+    const ok = !open && typeof password === 'string' && crypto.timingSafeEqual(crypto.createHash('sha256').update(password).digest(), pwHash);
     if (!ok) { await new Promise((r) => setTimeout(r, 400)); return send(res, 401, {error: 'Falsches Passwort'}); }
     fails.delete(ip);
     const gi = globalFails.indexOf(stamp); if (gi >= 0) globalFails.splice(gi, 1);
@@ -130,7 +134,7 @@ async function api(req, res, url){
   if (p === '/api/logout' && m === 'POST') return send(res, 200, {ok: true}, {'Set-Cookie': cookie('', 0)});
 
   const isAuthed = authed(req);
-  if (p === '/api/me') return send(res, 200, {auth: isAuthed, strava: isAuthed ? strava.status() : null});
+  if (p === '/api/me') return send(res, 200, {auth: isAuthed, open, strava: isAuthed ? strava.status() : null});
   if (!isAuthed) return send(res, 401, {error: 'Nicht angemeldet'});
 
   if (p === '/api/state' && m === 'GET') return send(res, 200, db.getState());

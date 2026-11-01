@@ -202,13 +202,13 @@ function renderAccount(){
   const box = $('account'); if (!box) return;
   if (!hosted) { box.innerHTML = '<p class="lead">Lokale Vorschau ohne Server.</p>'; return; }
   if (!sync.authed) { box.innerHTML = '<p class="lead">Nicht angemeldet. Deine Einträge liegen nur auf diesem Gerät.</p><button class="btn primary" type="button" id="accLogin">Anmelden</button>'; $('accLogin').onclick = () => { $('info').close(); $('login').showModal(); }; return; }
-  const st = (sync.me && sync.me.strava) || {};
-  box.innerHTML = '<p class="lead">Angemeldet. Einträge und Fotos werden mit dem Server abgeglichen.</p>' +
+  const st = (sync.me && sync.me.strava) || {}, isOpen = sync.me && sync.me.open;
+  box.innerHTML = '<p class="lead">' + (isOpen ? 'Einträge und Fotos werden mit dem Server abgeglichen.' : 'Angemeldet. Einträge und Fotos werden mit dem Server abgeglichen.') + '</p>' +
     '<div class="btnrow">' + (st.connected ? '<button class="btn" type="button" id="accStravaOff">Strava trennen' + (st.athlete ? ' (' + esc(st.athlete) + ')' : '') + '</button>' :
       st.configured ? '<a class="btn primary" href="/auth/strava">Mit Strava verbinden</a>' : '<span class="lead" style="margin:0">Strava ist am Server noch nicht eingerichtet.</span>') +
-    '<button class="btn" type="button" id="accOut">Abmelden</button></div>';
+    (isOpen ? '' : '<button class="btn" type="button" id="accOut">Abmelden</button>') + '</div>';
   if ($('accStravaOff')) $('accStravaOff').onclick = async () => { await api('/api/strava/disconnect', {method:'POST'}); sync.me = await api('/api/me'); renderAccount(); };
-  $('accOut').onclick = async () => { await api('/api/logout', {method:'POST'}); sync.authed = false; renderAccount(); toast('Abgemeldet'); };
+  if ($('accOut')) $('accOut').onclick = async () => { await api('/api/logout', {method:'POST'}); sync.authed = false; renderAccount(); toast('Abgemeldet'); };
 }
 
 /* Strava im Formular */
@@ -520,13 +520,19 @@ function areaTravel(a, k){
   return h + '</section>';
 }
 function areaWeather(a, k){
-  const wx = wxCoords(a);
-  const src = 'https://www.meteoblue.com/de/wetter/widget/meteogram/' + wx + '_Europe%2FVienna?geoloc=fixed&temperature_units=CELSIUS&windspeed_units=KILOMETER_PER_HOUR&precipitation_units=MILLIMETER&forecast_days=4&layout=bright&autowidth=auto';
-  return '<p class="lead" style="margin-top:18px">meteoblue-Meteogramm für die nächsten 4 Tage, auf ca. ' + fmt(ELEV[a.id] || 1500) + ' m am Berg.</p>' +
-    '<div class="wx">' + (navigator.onLine ? '<iframe loading="lazy" title="Meteogramm ' + esc(a.n) + '" src="' + src + '"></iframe>' : '<div class="wx-off">Offline. Das Wetter lädt, sobald du wieder Netz hast.</div>') + '</div>' +
+  // Das Meteogramm-Widget von meteoblue braucht inzwischen ein Konto. Diese beiden Widgets gehen ohne.
+  const wx = wxCoords(a), loc = wx + '_Europe%2FVienna';
+  const three = 'https://www.meteoblue.com/de/wetter/widget/three/' + loc + '?geoloc=fixed&nocurrent=0&noforecast=0&days=4&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&layout=image';
+  const daily = 'https://www.meteoblue.com/de/wetter/widget/daily/' + loc + '?geoloc=fixed&days=7&tempunit=CELSIUS&windunit=KILOMETER_PER_HOUR&precipunit=MILLIMETER&coloured=coloured&pictoicon=1&maxtemperature=1&mintemperature=1&windspeed=1&windgust=1&winddirection=0&uv=0&humidity=0&precipitation=1&precipitationprobability=1&spot=0&pressure=0&layout=light';
+  const off = '<div class="wx-off">Offline. Das Wetter lädt, sobald du wieder Netz hast.</div>';
+  return '<p class="lead" style="margin-top:18px">Vorhersage von meteoblue für ca. ' + fmt(ELEV[a.id] || 1500) + ' m am Berg.</p>' +
+    '<h3 style="margin:0 0 8px">Nächste 4 Tage, alle 3 Stunden</h3>' +
+    '<div class="wx wx-three">' + (navigator.onLine ? '<iframe loading="lazy" scrolling="no" title="Wetter alle 3 Stunden, ' + esc(a.n) + '" src="' + three + '"></iframe>' : off) + '</div>' +
+    '<h3 style="margin:22px 0 8px">7 Tage</h3>' +
+    '<div class="wx wx-daily">' + (navigator.onLine ? '<iframe loading="lazy" scrolling="no" title="7-Tage-Wetter, ' + esc(a.n) + '" src="' + daily + '"></iframe>' : off) + '</div>' +
     '<div class="btnrow" style="margin-top:12px">' +
-    (k.cam ? '<a class="btn" href="' + esc(k.cam) + '" target="_blank" rel="noopener">' + ICON.cam + 'Webcams</a>' : '') +
-    '<a class="btn" href="https://www.meteoblue.com/de/wetter/woche/' + wx + '_Europe%2FVienna" target="_blank" rel="noopener">14 Tage bei meteoblue</a></div>';
+    '<a class="btn" href="https://www.meteoblue.com/de/wetter/vorhersage/meteogramweb/' + wx + '" target="_blank" rel="noopener">Meteogramm bei meteoblue</a>' +
+    (k.cam ? '<a class="btn" href="' + esc(k.cam) + '" target="_blank" rel="noopener">' + ICON.cam + 'Webcams</a>' : '') + '</div>';
 }
 function areaInfo(a, k){
   const ct = k.contact || {};
