@@ -56,7 +56,12 @@ Läuft auf dem Hetzner-Server neben anderen Projekten, streng getrennt:
 - Dienst `ski.service`, hört nur auf `127.0.0.1:3100`
 - nginx: eigene Datei `sites-available/ski.olomek.com`, Zertifikat von Let's Encrypt
 
-Update nach einem Push:
+Zweite Instanz für Ronnie unter https://ski-ronnie.olomek.com, gleicher Code, eigene Daten:
+
+- Benutzer `skironnie`, Dienst `ski-ronnie.service` auf `127.0.0.1:3101`
+- nginx-Datei `sites-available/ski-ronnie.olomek.com`, eigenes Zertifikat
+
+Update nach einem Push (aktualisiert beide Instanzen):
 
 ```bash
 ssh root@157.180.85.161 /home/ski/app/deploy/update.sh

@@ -910,6 +910,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 
 $('infoBtn').onclick = () => { renderAccount(); $('info').showModal(); };
 document.querySelectorAll('[data-close]').forEach((b) => { b.onclick = () => b.closest('dialog').close(); });
+document.querySelectorAll('.apphost').forEach((el) => { el.textContent = location.host; });
 sync.boot();
 renderRate();
 route();
