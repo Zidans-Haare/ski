@@ -39,6 +39,12 @@ strava.init(db, cfg);
 
 /* ---------- Sitzung ---------- */
 const sign = (v) => crypto.createHmac('sha256', cfg.secret).update(v).digest('base64url');
+// Schlüssel für den Lese-Link eines Tages: ohne ihn lässt sich das Tagebuch nicht über erratene Daten durchblättern
+const dayKey = (d) => sign('day:' + d).slice(0, 16);
+function dayKeyOk(d, t){
+  if (typeof t !== 'string' || t.length !== 16) return false;
+  return crypto.timingSafeEqual(Buffer.from(t), Buffer.from(dayKey(d)));
+}
 function makeSession(){
   const exp = Date.now() + 1000 * 60 * 60 * 24 * 180;
   const v = String(exp);
@@ -145,9 +151,11 @@ async function api(req, res, url){
   }
   if (p === '/api/logout' && m === 'POST') return send(res, 200, {ok: true}, {'Set-Cookie': cookie('', 0)});
 
-  // Lese-Link für einen Skitag (z. B. aus Strava): nur die Einträge dieses Tages, ohne Anmeldung
+  // Lese-Link für einen Skitag (z. B. aus Strava): nur die Einträge dieses Tages, ohne Anmeldung nur mit Schlüssel
+  const isAuthed = authed(req);
   const dm = /^\/api\/day\/(\d{4}-\d{2}-\d{2})$/.exec(p);
   if (dm && m === 'GET') {
+    if (!isAuthed && !dayKeyOk(dm[1], url.searchParams.get('t'))) return send(res, 404, {error: 'Dieser Link ist nicht gültig'});
     const diary = db.getState().diary || [];
     const entries = diary.filter((e) => e && e.d === dm[1] && !e.sample).map((e) => ({
       id: e.id, d: e.d, a: e.a, hm: e.hm, km: e.km, runs: e.runs, vmax: e.vmax, prof: e.prof, note: e.note, snow: e.snow, r: e.r, travel: e.travel, trip: e.trip,
@@ -156,19 +164,24 @@ async function api(req, res, url){
     return send(res, 200, {entries}, {'Cache-Control': 'no-store'});
   }
 
-  const isAuthed = authed(req);
   if (p === '/api/me') return send(res, 200, {auth: isAuthed, open, strava: isAuthed ? strava.status() : null});
   // Fotos aus dem Tagebuch sind auch ohne Anmeldung abrufbar (für den Lese-Link), alles andere nicht
   const pm = /^\/api\/photos\/([\w-]{8,40})$/.exec(p);
   if (pm && m === 'GET') {
     const meta = db.getPhoto(pm[1]);
-    const inDiary = () => (db.getState().diary || []).some((e) => !e.sample && (e.ph || []).some((x) => x && x.sid === pm[1]));
-    if (!meta || (!isAuthed && !inDiary())) return send(res, 404, {error: 'Foto nicht gefunden'});
+    // Ohne Anmeldung nur Fotos eines Tages, für den ein gültiger Schlüssel mitkommt
+    const d = url.searchParams.get('d') || '';
+    const shared = () => /^\d{4}-\d{2}-\d{2}$/.test(d) && dayKeyOk(d, url.searchParams.get('t')) &&
+      (db.getState().diary || []).some((e) => e.d === d && !e.sample && (e.ph || []).some((x) => x && x.sid === pm[1]));
+    if (!meta || (!isAuthed && !shared())) return send(res, 404, {error: 'Foto nicht gefunden'});
     const buf = await fs.promises.readFile(path.join(PHOTOS, pm[1]));
     return send(res, 200, buf, {'Content-Type': meta.mime, 'Cache-Control': 'private, max-age=31536000, immutable'});
   }
 
   if (!isAuthed) return send(res, 401, {error: 'Nicht angemeldet'});
+
+  const sm = /^\/api\/share\/(\d{4}-\d{2}-\d{2})$/.exec(p);
+  if (sm && m === 'GET') return send(res, 200, {key: dayKey(sm[1])});
 
   if (p === '/api/state' && m === 'GET') return send(res, 200, db.getState());
   if (p === '/api/state' && m === 'PUT') {

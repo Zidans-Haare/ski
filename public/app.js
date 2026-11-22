@@ -190,7 +190,7 @@ const sync = {
 };
 window.addEventListener('online', () => sync.uploadPending());
 async function photoUrl(key){
-  if (key.startsWith('s:')) return '/api/photos/' + encodeURIComponent(key.slice(2));
+  if (key.startsWith('s:')) return '/api/photos/' + encodeURIComponent(key.slice(2)) + (mode === 'guest' ? '?d=' + dayFilter + '&t=' + encodeURIComponent(dayKey) : '');
   return photoDB.url(key);
 }
 
@@ -268,13 +268,13 @@ const TABS = ['saison','karte','planen','tagebuch','rechnung'];
 let lastTab = 'saison';
 function route(){
   const h = location.hash.replace(/^#\/?/, '') || 'saison';
-  const [view, arg] = h.split('/');
+  const [view, arg, key] = h.split('/');
   dayFilter = null;
   document.body.classList.toggle('gate', mode === 'pending');
   document.body.classList.toggle('guest', mode === 'guest');
   if (mode === 'pending') return;
   if (mode === 'guest') {
-    if (view === 'tag' && /^\d{4}-\d{2}-\d{2}$/.test(arg || '')) { dayFilter = arg; show('tagebuch'); }
+    if (view === 'tag' && /^\d{4}-\d{2}-\d{2}$/.test(arg || '')) { dayFilter = arg; dayKey = key || ''; show('tagebuch'); }
     else show('lock');
     return;
   }
@@ -669,10 +669,10 @@ function phSvg(g){
   return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="pg' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient></defs>' +
     '<rect width="100" height="100" fill="url(#pg' + g + ')"/><polygon points="0,70 24,40 38,55 60,26 82,50 100,38 100,100 0,100" fill="#F4F8FA"/><polygon points="0,82 30,66 55,76 80,62 100,72 100,100 0,100" fill="#DDE7EC"/></svg>';
 }
-let pubDay = {d: null, entries: []};
+let pubDay = {d: null, entries: []}, dayKey = '';
 async function loadPubDay(d){
   $('diary').innerHTML = '<p class="lead">Lade den Skitag …</p>';
-  try { pubDay = {d, entries: (await api('/api/day/' + d)).entries}; }
+  try { pubDay = {d, entries: (await api('/api/day/' + d + '?t=' + encodeURIComponent(dayKey))).entries}; }
   catch(e){ pubDay = {d, entries: [], err: e.message}; }
   if (mode === 'guest' && dayFilter === d) renderDiary();
 }
@@ -798,7 +798,10 @@ $('entry').addEventListener('close', async function(){
 
 /* ---------- Tages-Link für Strava ---------- */
 async function copyDayLink(d){
-  const url = location.origin + '/#/tag/' + d;
+  let key = '';
+  try { if (hosted && sync.me && !sync.me.open) key = '/' + (await api('/api/share/' + d)).key; }
+  catch(e){ toast('Link gerade nicht verfügbar, bitte mit Netz nochmal'); return; }
+  const url = location.origin + '/#/tag/' + d + key;
   try {
     if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({title: 'Skitag ' + dstr(d), url}); return; }
     await navigator.clipboard.writeText(url); toast('Link kopiert');
