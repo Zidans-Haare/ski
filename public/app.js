@@ -129,10 +129,13 @@ const plannedDays = () => {
 
 /* ---------- Server: Anmeldung und Abgleich ---------- */
 const hosted = location.protocol !== 'file:';
+// full: alles; guest: ohne Anmeldung, nur der Lese-Link #/tag/…; pending: noch unklar (Start)
+let mode = hosted ? 'pending' : 'full';
+function setMode(m){ if (mode === m) return; mode = m; route(); }
 async function api(path, opt = {}){
   const r = await fetch(path, {credentials:'same-origin', ...opt, headers:{...(opt.json ? {'Content-Type':'application/json'} : {}), ...(opt.headers || {})}, body: opt.json ? JSON.stringify(opt.json) : opt.body});
   const data = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
-  if (r.status === 401 && path !== '/api/login') { sync.authed = false; }
+  if (r.status === 401 && path !== '/api/login') { sync.authed = false; if (mode === 'full') { store.set('authOk', false); setMode('guest'); } }
   if (!r.ok) throw Object.assign(new Error((data && data.error) || ('Fehler ' + r.status)), {status: r.status});
   return data;
 }
@@ -140,9 +143,12 @@ const sync = {
   authed: false, me: null, timer: null,
   async boot(){
     if (!hosted) return;
-    try { this.me = await api('/api/me'); } catch(e){ return; }
+    try { this.me = await api('/api/me'); }
+    catch(e){ setMode(store.get('authOk', false) ? 'full' : 'guest'); return; } // offline: wie beim letzten Mal
     this.authed = this.me.auth;
-    if (!this.authed) { if (!store.get('askedLogin', false)) { store.set('askedLogin', true); $('login').showModal(); } return; }
+    store.set('authOk', this.authed);
+    if (!this.authed) { setMode('guest'); return; }
+    setMode('full');
     await this.pull();
     this.uploadPending();
     if (/strava=ok/.test(location.hash)) toast('Strava verbunden');
@@ -194,9 +200,18 @@ $('loginForm').addEventListener('submit', async (e) => {
   try {
     await api('/api/login', {method:'POST', json:{password: $('loginPw').value}});
     $('login').close(); $('loginPw').value = '';
-    sync.authed = true; sync.me = await api('/api/me');
-    await sync.pull(); sync.uploadPending(); toast('Angemeldet');
+    await loggedIn();
   } catch(err){ $('loginErr').textContent = err.message; }
+});
+async function loggedIn(){
+  sync.authed = true; store.set('authOk', true); sync.me = await api('/api/me');
+  setMode('full'); await sync.pull(); sync.uploadPending(); toast('Angemeldet');
+}
+$('lockForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('lockErr').textContent = '';
+  try { await api('/api/login', {method:'POST', json:{password: $('lockPw').value}}); $('lockPw').value = ''; await loggedIn(); }
+  catch(err){ $('lockErr').textContent = err.message; }
 });
 
 function renderAccount(){
@@ -209,7 +224,7 @@ function renderAccount(){
       st.configured ? '<a class="btn primary" href="/auth/strava">Mit Strava verbinden</a>' : '<span class="lead" style="margin:0">Strava ist am Server noch nicht eingerichtet.</span>') +
     (isOpen ? '' : '<button class="btn" type="button" id="accOut">Abmelden</button>') + '</div>';
   if ($('accStravaOff')) $('accStravaOff').onclick = async () => { await api('/api/strava/disconnect', {method:'POST'}); sync.me = await api('/api/me'); renderAccount(); };
-  if ($('accOut')) $('accOut').onclick = async () => { await api('/api/logout', {method:'POST'}); sync.authed = false; renderAccount(); toast('Abgemeldet'); };
+  if ($('accOut')) $('accOut').onclick = async () => { await api('/api/logout', {method:'POST'}); sync.authed = false; store.set('authOk', false); $('info').close(); setMode('guest'); toast('Abgemeldet'); };
 }
 
 /* Strava im Formular */
@@ -255,6 +270,14 @@ function route(){
   const h = location.hash.replace(/^#\/?/, '') || 'saison';
   const [view, arg] = h.split('/');
   dayFilter = null;
+  document.body.classList.toggle('gate', mode === 'pending');
+  document.body.classList.toggle('guest', mode === 'guest');
+  if (mode === 'pending') return;
+  if (mode === 'guest') {
+    if (view === 'tag' && /^\d{4}-\d{2}-\d{2}$/.test(arg || '')) { dayFilter = arg; show('tagebuch'); }
+    else show('lock');
+    return;
+  }
   if (view === 'tag' && /^\d{4}-\d{2}-\d{2}$/.test(arg || '')) { dayFilter = arg; show('tagebuch'); return; }
   if (view === 'neu') { show('tagebuch'); openEntry(); return; }
   if (view === 'gebiet' && BY[arg]) { show('gebiet', arg); return; }
@@ -531,7 +554,7 @@ const LIFT_STATUS = {
   lienz:'https://www.lienzer-bergbahnen.at/de/skigebiete-tirol/lifte-pisten/', falkert:'https://www.heidialm.at/home/de/schneebericht'
 };
 function areaNow(a, k){
-  return '<div id="now" style="margin-top:18px"><p class="lead">Lade den aktuellen Schneebericht …</p></div>';
+  return '<div id="now" style="margin-top:18px"><p class="lead">Lade Lifte und Pisten …</p></div>';
 }
 async function loadNow(a, k){
   const box = $('now'); if (!box) return;
@@ -541,23 +564,28 @@ async function loadNow(a, k){
     (LIFT_STATUS[a.id] ? '<a class="btn" href="' + esc(LIFT_STATUS[a.id]) + '" target="_blank" rel="noopener">Liftstatus beim Gebiet</a>' : '') +
     (k.map ? '<a class="btn" href="' + esc(k.map) + '" target="_blank" rel="noopener">' + ICON.map + 'Pistenplan</a>' : '') +
     (!src && web ? '<a class="btn" href="' + esc(web) + '" target="_blank" rel="noopener">Website des Gebiets</a>' : '') + '</div>' +
-    (src ? '<p style="font-size:14px;color:var(--ink2);margin-top:12px">Quelle: <a href="' + esc(src) + '" target="_blank" rel="noopener">Schneebericht auf bergfex</a>. Wird alle 30 Minuten aktualisiert.</p>' : '');
+    (src ? '<p style="font-size:14px;color:var(--ink2);margin-top:12px">Quelle: <a href="' + esc(src) + '" target="_blank" rel="noopener">Pistenplan von Intermaps</a>, Angaben der Bergbahnen. Wird alle 15 Minuten aktualisiert.</p>' : '');
   if (!hosted || !navigator.onLine) { box.innerHTML = '<p class="lead">' + (navigator.onLine ? 'Nur mit Server verfügbar.' : 'Offline. Der Schneebericht lädt, sobald du wieder Netz hast.') + '</p>' + links(null); return; }
   let r;
   try { r = await api('/api/report/' + a.id); }
   catch(err){ box.innerHTML = '<p class="lead">' + esc(err.message) + '.</p>' + links(null); return; }
   if ($('now') !== box) return;
-  if (!r.source) { box.innerHTML = '<p class="lead">Für ' + esc(a.n) + ' gibt es keinen Schneebericht auf bergfex. Aktuelles findest du direkt beim Gebiet.</p>' + links(null); return; }
-  const open = r.liftsOpen > 0, total = r.liftsTotal || 0;
-  const row = (label, val) => '<div><span>' + esc(label) + '</span><b>' + (val == null ? '–' : esc(val)) + '</b></div>';
+  if (!r.source) { box.innerHTML = '<p class="lead">Für ' + esc(a.n) + ' gibt es keine Live-Daten zu Liften und Pisten. Aktuelles findest du direkt beim Gebiet.</p>' + links(null); return; }
+  const open = r.liftsOpen > 0;
+  const when = r.reportedAt ? new Date(r.reportedAt).toLocaleString('de-AT', {day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : null;
+  const meter = (n, total, label) => total ? '<div class="nowlifts"><b>' + n + '</b><span>von ' + total + ' ' + label + '</span></div>' +
+    '<div class="meter" aria-hidden="true"><div class="fill" style="width:' + (n / total * 100) + '%"></div></div>' : '';
+  const ST = {open:'offen', closed:'zu', unknown:'?'};
+  const DIFF = {easy:'blue', medium:'red', difficult:'black', freeride:'black'};
+  const list = (items, slope) => '<ul class="nowlist">' + items.slice().sort((x, y) => (x.s === 'open' ? 0 : 1) - (y.s === 'open' ? 0 : 1)).map((x) =>
+    '<li class="' + (x.s === 'open' ? 'on' : 'off') + '">' + (slope && DIFF[x.diff] ? '<i class="pd ' + DIFF[x.diff] + '"></i>' : '') + '<span>' + esc(x.n) + '</span><b>' + (ST[x.s] || esc(x.s)) + '</b></li>').join('') + '</ul>';
   box.innerHTML =
     '<div class="nowhead"><span class="nowstate ' + (open ? 'on' : 'off') + '">' + (r.liftsOpen == null ? 'Keine Liftmeldung' : open ? 'Geöffnet' : 'Geschlossen') + '</span>' +
-      (r.reportedAt ? '<span class="lead" style="margin:0">Stand ' + esc(r.reportedAt) + '</span>' : '') + '</div>' +
-    (total ? '<div class="nowlifts"><b>' + r.liftsOpen + '</b><span>von ' + total + ' Liften offen</span></div>' +
-      '<div class="meter" aria-hidden="true"><div class="fill" style="width:' + (r.liftsOpen / total * 100) + '%"></div></div>' : '') +
-    '<div class="snowpair"><div><span>Berg' + (r.mountain.alt ? ' (' + esc(r.mountain.alt) + ' m)' : '') + '</span><b>' + (r.mountain.cm != null ? r.mountain.cm + ' cm' : '–') + '</b></div>' +
-      '<div><span>Tal' + (r.valley.alt ? ' (' + esc(r.valley.alt) + ' m)' : '') + '</span><b>' + (r.valley.cm != null ? r.valley.cm + ' cm' : '–') + '</b></div></div>' +
-    '<div class="kv">' + row('Betrieb', r.status) + row('Pisten', r.slopes) + row('Schnee', r.snow) + row('Letzter Schneefall', r.lastSnowfall) + row('Lawinenwarnstufe', r.avalanche) + '</div>' +
+      (when ? '<span class="lead" style="margin:0">Stand ' + esc(when) + '</span>' : '') + '</div>' +
+    (r.liftsOpen != null ? meter(r.liftsOpen, r.liftsTotal, 'Liften offen') + meter(r.slopesOpen, r.slopesTotal, 'Pisten offen') +
+      (r.slopesKm ? '<p class="lead" style="margin-top:10px">' + (r.slopesKmOpen || 0).toLocaleString('de-AT') + ' von ' + r.slopesKm.toLocaleString('de-AT') + ' km Piste befahrbar</p>' : '') : '') +
+    (r.lifts.length ? '<details class="nowdet"><summary>Alle Lifte</summary>' + list(r.lifts) + '</details>' : '') +
+    (r.slopes.length ? '<details class="nowdet"><summary>Alle Pisten</summary>' + list(r.slopes, true) + '</details>' : '') +
     links(r.source);
 }
 function areaWeather(a, k){
@@ -641,8 +669,17 @@ function phSvg(g){
   return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="pg' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient></defs>' +
     '<rect width="100" height="100" fill="url(#pg' + g + ')"/><polygon points="0,70 24,40 38,55 60,26 82,50 100,38 100,100 0,100" fill="#F4F8FA"/><polygon points="0,82 30,66 55,76 80,62 100,72 100,100 0,100" fill="#DDE7EC"/></svg>';
 }
+let pubDay = {d: null, entries: []};
+async function loadPubDay(d){
+  $('diary').innerHTML = '<p class="lead">Lade den Skitag …</p>';
+  try { pubDay = {d, entries: (await api('/api/day/' + d)).entries}; }
+  catch(e){ pubDay = {d, entries: [], err: e.message}; }
+  if (mode === 'guest' && dayFilter === d) renderDiary();
+}
 function renderDiary(){
-  const list = diary.slice().sort((a, b) => a.d < b.d ? 1 : -1).filter((e) => !dayFilter || e.d === dayFilter);
+  if (mode === 'guest' && pubDay.d !== dayFilter) { $('diaryHead').textContent = dstr(dayFilter, {weekday:'long', day:'numeric', month:'long'}); loadPubDay(dayFilter); return; }
+  if (mode === 'guest' && !pubDay.entries.length) { $('diary').innerHTML = '<div class="empty"><p>' + (pubDay.err ? esc(pubDay.err) + '.' : 'Für diesen Tag gibt es keinen Eintrag.') + '</p></div>'; return; }
+  const list = (mode === 'guest' ? pubDay.entries : diary).slice().sort((a, b) => a.d < b.d ? 1 : -1).filter((e) => !dayFilter || e.d === dayFilter);
   const hasSample = !dayFilter && list.some((e) => e.sample);
   $('diaryHead').textContent = dayFilter ? dstr(dayFilter, {weekday:'long', day:'numeric', month:'long'}) : 'Meine Skitage';
   if (dayFilter && !list.length) { $('diary').innerHTML = '<div class="empty"><p>Für diesen Tag gibt es noch keinen Eintrag.</p><button class="btn primary" data-new="' + dayFilter + '">Jetzt eintragen</button><p><a class="textlink" href="#/tagebuch">Alle Skitage</a></p></div>'; return; }
@@ -676,7 +713,7 @@ $('diary').addEventListener('click', async (ev) => {
   const ed = ev.target.closest('[data-edit]');
   if (ed) { const en = diary.find((x) => String(x.id) === ed.dataset.edit); if (en) openEntry(null, en); return; }
   const b = ev.target.closest('.ph'); if (!b) return;
-  const e = diary.find((x) => String(x.id) === b.dataset.e), p = e.ph[+b.dataset.i];
+  const e = (mode === 'guest' ? pubDay.entries : diary).find((x) => String(x.id) === b.dataset.e), p = e.ph[+b.dataset.i];
   const img = $('lbImg');
   if (p.sid || p.id) img.src = await photoUrl(p.sid ? 's:' + p.sid : p.id) || '';
   else img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(phSvg(p.g).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '));

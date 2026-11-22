@@ -106,6 +106,19 @@
   </div>
 </section>
 
+<!-- ANMELDEN (ohne Anmeldung ist nur der Lese-Link #/tag/… offen) -->
+<section class="view" id="v-lock" data-title="Anmelden">
+  <div class="lock">
+    <h1 class="pageh">Skisaison</h1>
+    <p class="lead">Dieses Tagebuch ist privat. Mit dem Passwort geht es weiter.</p>
+    <form id="lockForm">
+      <label class="f">Passwort<input type="password" id="lockPw" autocomplete="current-password" required></label>
+      <p class="hint" id="lockErr" style="color:var(--danger)"></p>
+      <button class="btn primary">Anmelden</button>
+    </form>
+  </div>
+</section>
+
 </main>
 
 <button class="fab" id="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Skitag eintragen</button>

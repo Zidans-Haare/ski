@@ -19,11 +19,11 @@ Der Server hat eine einzige Abhängigkeit (`hafas-client` für ÖBB-Verbindungen
 
 - **Karte und Gebiete:** Pisten, Lifte, Pistenplan, Webcams und Kontakt aus kaerntner-skipass.com
 - **Anreise:** Ablauf ab Villach Hbf, nächste Verbindungen live von der ÖBB, Scotty-Link mit Tag und Uhrzeit, Anreise-Seiten der Skigebiete
-- **Aktuell:** offene Lifte, Schneehöhe Berg und Tal, Pisten- und Schneezustand, Lawinenstufe (von bergfex, 30 Minuten zwischengespeichert)
+- **Aktuell:** offene Lifte und Pisten, befahrbare Pisten-km, Status jeder Anlage (von Intermaps, 15 Minuten zwischengespeichert; bergfex sperrt Server-Abrufe)
 - **Wetter:** meteoblue-Vorhersage pro Gebiet (alle 3 Stunden und 7 Tage), Link zum vollen Meteogramm
 - **Trips:** Kombis mit Übernachtung und ob sich die Nacht lohnt
 - **Tagebuch:** Skitage mit Fotos; GPX aus Garmin Connect laden (Höhenmeter bergab, Pisten-km, Abfahrten, Höchstgeschwindigkeit, Höhenprofil)
-- **Tages-Link:** `https://ski.olomek.com/#/tag/2027-01-16` zeigt genau diesen Skitag, z. B. als Link in der Strava-Beschreibung
+- **Tages-Link:** `https://ski.olomek.com/#/tag/2027-01-16` zeigt genau diesen Skitag, z. B. als Link in der Strava-Beschreibung. Ohne Anmeldung ist das eine reine Leseansicht; der Rest der App braucht das Passwort.
 - **Rechnung:** Tagespreise je Gebiet gegen den Passpreis
 
 ## Lokal starten
@@ -36,14 +36,15 @@ npm run dev
 
 ## API
 
-Ist `APP_PASSWORD` gesetzt, brauchen alle Routen außer `/api/health`, `/api/login` und `/api/me` eine Anmeldung. Ohne Passwort ist die App offen.
+Ist `APP_PASSWORD` gesetzt, brauchen alle Routen außer `/api/health`, `/api/login`, `/api/me`, `/api/report` und `/api/day` eine Anmeldung. Ohne Passwort ist die App offen.
 
 | Route | Zweck |
 |---|---|
 | `POST /api/login` | Anmelden mit `APP_PASSWORD` (falls gesetzt), setzt ein Sitzungs-Cookie |
 | `GET/PUT /api/state` | Tagebuch, Trip, Passpreis und eigene Tagespreise |
 | `POST /api/photos`, `GET /api/photos/:id` | Fotos hochladen und laden |
-| `GET /api/report/:gebiet` | Aktueller Schneebericht und Liftstatus (bergfex) |
+| `GET /api/report/:gebiet` | Lift- und Pistenstatus (Intermaps), öffentlich |
+| `GET /api/day/:datum` | Einträge eines Tages zum Lesen, öffentlich; Fotos aus dem Tagebuch sind ebenfalls ohne Anmeldung abrufbar |
 | `GET /api/journeys?to=&when=` | Verbindungen ab Villach Hbf (ÖBB) |
 | `GET /api/strava/activities?date=` | Skiaktivitäten eines Tages von Strava |
 | `GET /auth/strava` | Strava verbinden |

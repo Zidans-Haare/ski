@@ -124,7 +124,7 @@ async function api(req, res, url){
   const rm = /^\/api\/report\/([a-z]+)$/.exec(p);
   if (rm && m === 'GET') {
     try { return send(res, 200, await report(rm[1]), {'Cache-Control': 'public, max-age=600'}); }
-    catch (e) { console.error('bergfex', e.message); return send(res, 502, {error: 'Schneebericht gerade nicht erreichbar'}); }
+    catch (e) { console.error('report', e.message); return send(res, 502, {error: 'Lift- und Pistenstatus gerade nicht erreichbar'}); }
   }
 
   if (p === '/api/login' && m === 'POST') {
@@ -145,8 +145,29 @@ async function api(req, res, url){
   }
   if (p === '/api/logout' && m === 'POST') return send(res, 200, {ok: true}, {'Set-Cookie': cookie('', 0)});
 
+  // Lese-Link für einen Skitag (z. B. aus Strava): nur die Einträge dieses Tages, ohne Anmeldung
+  const dm = /^\/api\/day\/(\d{4}-\d{2}-\d{2})$/.exec(p);
+  if (dm && m === 'GET') {
+    const diary = db.getState().diary || [];
+    const entries = diary.filter((e) => e && e.d === dm[1] && !e.sample).map((e) => ({
+      id: e.id, d: e.d, a: e.a, hm: e.hm, km: e.km, runs: e.runs, vmax: e.vmax, prof: e.prof, note: e.note, snow: e.snow, r: e.r, travel: e.travel, trip: e.trip,
+      ph: (e.ph || []).filter((x) => x && x.sid).map((x) => ({sid: x.sid, c: x.c}))
+    }));
+    return send(res, 200, {entries}, {'Cache-Control': 'no-store'});
+  }
+
   const isAuthed = authed(req);
   if (p === '/api/me') return send(res, 200, {auth: isAuthed, open, strava: isAuthed ? strava.status() : null});
+  // Fotos aus dem Tagebuch sind auch ohne Anmeldung abrufbar (für den Lese-Link), alles andere nicht
+  const pm = /^\/api\/photos\/([\w-]{8,40})$/.exec(p);
+  if (pm && m === 'GET') {
+    const meta = db.getPhoto(pm[1]);
+    const inDiary = () => (db.getState().diary || []).some((e) => !e.sample && (e.ph || []).some((x) => x && x.sid === pm[1]));
+    if (!meta || (!isAuthed && !inDiary())) return send(res, 404, {error: 'Foto nicht gefunden'});
+    const buf = await fs.promises.readFile(path.join(PHOTOS, pm[1]));
+    return send(res, 200, buf, {'Content-Type': meta.mime, 'Cache-Control': 'private, max-age=31536000, immutable'});
+  }
+
   if (!isAuthed) return send(res, 401, {error: 'Nicht angemeldet'});
 
   if (p === '/api/state' && m === 'GET') return send(res, 200, db.getState());
@@ -163,13 +184,6 @@ async function api(req, res, url){
     await fs.promises.writeFile(path.join(PHOTOS, id), buf);
     db.addPhoto(id, type, buf.length);
     return send(res, 201, {id});
-  }
-  const pm = /^\/api\/photos\/([\w-]{8,40})$/.exec(p);
-  if (pm && m === 'GET') {
-    const meta = db.getPhoto(pm[1]);
-    if (!meta) return send(res, 404, {error: 'Foto nicht gefunden'});
-    const buf = await fs.promises.readFile(path.join(PHOTOS, pm[1]));
-    return send(res, 200, buf, {'Content-Type': meta.mime, 'Cache-Control': 'private, max-age=31536000, immutable'});
   }
 
   if (p === '/api/journeys' && m === 'GET') {
