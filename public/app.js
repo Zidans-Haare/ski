@@ -672,12 +672,13 @@ function phSvg(g){
 let pubDay = {d: null, entries: []}, dayKey = '';
 async function loadPubDay(d){
   $('diary').innerHTML = '<p class="lead">Lade den Skitag …</p>';
-  try { pubDay = {d, entries: (await api('/api/day/' + d + '?t=' + encodeURIComponent(dayKey))).entries}; }
-  catch(e){ pubDay = {d, entries: [], err: e.message}; }
+  const k = dayKey;
+  try { pubDay = {d, k, entries: (await api('/api/day/' + d + '?t=' + encodeURIComponent(k))).entries}; }
+  catch(e){ pubDay = {d, k, entries: [], err: e.message}; }
   if (mode === 'guest' && dayFilter === d) renderDiary();
 }
 function renderDiary(){
-  if (mode === 'guest' && pubDay.d !== dayFilter) { $('diaryHead').textContent = dstr(dayFilter, {weekday:'long', day:'numeric', month:'long'}); loadPubDay(dayFilter); return; }
+  if (mode === 'guest' && (pubDay.d !== dayFilter || pubDay.k !== dayKey)) { $('diaryHead').textContent = dstr(dayFilter, {weekday:'long', day:'numeric', month:'long'}); loadPubDay(dayFilter); return; }
   if (mode === 'guest' && !pubDay.entries.length) { $('diary').innerHTML = '<div class="empty"><p>' + (pubDay.err ? esc(pubDay.err) + '.' : 'Für diesen Tag gibt es keinen Eintrag.') + '</p></div>'; return; }
   const list = (mode === 'guest' ? pubDay.entries : diary).slice().sort((a, b) => a.d < b.d ? 1 : -1).filter((e) => !dayFilter || e.d === dayFilter);
   const hasSample = !dayFilter && list.some((e) => e.sample);
